@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Project 2 - Logistics Simulator</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="project-2---logistics-simulator">Project 2 - Logistics Simulator</h1>
+<p>In this project, we will make use of the data structures and algorithms we have learned in class to simulate a (simplified) logistics system of a delivery company.</p>
+<h2 id="evaluation">Evaluation</h2>
+<p>This is a <strong>GROUP</strong> project, with <strong>4 students</strong> per group.</p>
+<p>Each group needs to submit the implementation of project (source code, configuration files, test cases, project report or user manual, etc.), and give a group presentation on W16.</p>
+<h3 id="score-breakdown">Score Breakdown</h3>
+<p>A total of <strong>25 points</strong> is assigned to this project. The evaluation is divided into 3 parts:</p>
+<ol>
+<li>Overall quality based on the design and realization of the project evaluated by instructors (15 pts);</li>
+<li>Presentation quality evaluated by instructors (5 pts);</li>
+<li>Peer evaluation by classmates (5 pts).</li>
+</ol>
+<h3 id="peer-evaluation">Peer evaluation</h3>
+<p>For the 3rd part of the score, each student will grade the other 7 projects. And the average of the project will be computed and ranked.</p>
+<p>Groups ranked 1 and 2 get 20 pts (5*4), Group 3-4 get 18 pts (4.5*4), Group 5-6 get 16 pts (4*4) and Group 7-8 get 14 pts (3.5*4).</p>
+<p>Then, <u>the distribution of these total points to each group member will be decided by group members according to the contribution within the group</u>.</p>
+<p>For example, supposing that Group A get 13 pts from part 1, 4 pts from part 2 and ranked 3rd of class in the part 3 getting 18 pts, and decide together the distribution of points of part 3 as <code>[5, 5, 5, 3]</code>, then their grade of project 2 will be:</p>
+<table>
+<thead>
+<tr>
+<th>Group A</th>
+<th>Part1</th>
+<th>Part2</th>
+<th>Part3</th>
+<th>Project 2 grade</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Member 1</td>
+<td>13</td>
+<td>4</td>
+<td>5</td>
+<td>22</td>
+</tr>
+<tr>
+<td>Member 2</td>
+<td>13</td>
+<td>4</td>
+<td>5</td>
+<td>22</td>
+</tr>
+<tr>
+<td>Member 3</td>
+<td>13</td>
+<td>4</td>
+<td>5</td>
+<td>22</td>
+</tr>
+<tr>
+<td>Member 4</td>
+<td>13</td>
+<td>4</td>
+<td>3</td>
+<td>20</td>
+</tr>
+</tbody>
+</table>
+<h2 id="getting-started">Getting Started</h2>
+<p>In this project, we will first implement a simple simulator of a logistics system. After that, we will extend the simulator to include more features.</p>
+<h3 id="definitions">Definitions</h3>
+<h4 id="stations-and-centers">Stations and Centers</h4>
+<p>There are two types of locations in our logistics system: <code>Stations</code> and <code>Centers</code>.</p>
+<!-- Stations能收件投件，也可以用于中转，Centers只能用于中转。Stations规模较小，中转能力较差，Centers规模较大，中转能力较强。 -->
+<ul>
+<li><code>Stations</code> are small warehouses that can both receive and send packages from/to customers. That is to say, stations can be the source/destination of packages. They can also be used as transfer stations, but the transfer capacity is limited.</li>
+<li><code>Centers</code> are large warehouses that can only be used to transfer packages. They are neither source nor destination of any package. They have a larger scale and stronger transfer capacity.</li>
+</ul>
+<p>For each location, we define the following properties:</p>
+<ul>
+<li><code>ID</code>: a unique identifier for each location. ID is composed of a single lowercase letter and a positive integer. For a station, the letter is 's'; for a center, the letter is 'c'. Examples of IDs are <code>s1</code>, <code>s2</code>, <code>c1</code>, <code>c2</code>, etc.</li>
+<li><code>Pos</code>: the geographic location. It can be used to calculate the distance between two locations.</li>
+<li><code>Throughput</code>: the maximum number of packages that can be processed (transferred) by this location during one time tick (to be discussed later).</li>
+<li><code>Delay</code>: the time ticks needed for transferring each package at this location before it is sent to the next location.</li>
+<li><code>Cost</code>: the (economic) cost of transferring a package at this location.</li>
+</ul>
+<h4 id="routes">Routes</h4>
+<p>A <code>Route</code> is a connection between two locations. It is used to transport packages from one location to another.</p>
+<p>There are several types of routes, and you can also define your own types of routes if your further design requires.</p>
+<ul>
+<li><code>Road</code>: connection between two <code>stations</code>.</li>
+<li><code>Highway</code>: connection between a <code>station</code> and a <code>center</code>.</li>
+<li><code>Airline</code>: connection between two <code>centers</code>.</li>
+</ul>
+<p>Different types of routes have different properties, but they all have the following properties in common:</p>
+<ul>
+<li><code>Src</code> / <code>Dst</code>: the source and destination of the route.</li>
+<li><code>Time</code>: the time needed to transport a package through this route.</li>
+<li><code>Cost</code>: the (economic) cost of transporting a package through this route.</li>
+</ul>
+<p>Both <code>Time</code> and <code>Cost</code> are calculated with the distance between the source and destination, and the distance is calculated based on the <code>Pos</code> of <code>Src</code> and <code>Dst</code>.</p>
+<h4 id="packages">Packages</h4>
+<p>A <code>Package</code> is an object that needs to be delivered from one location to another. It has the following properties:</p>
+<ul>
+<li><code>ID</code>: a unique identifier (UUID) for each package, used to track the package.</li>
+<li><code>TimeCreated</code>: the time when the package is placed into the buffer of the source location. It's a float value.</li>
+<li><code>Src</code> / <code>Dst</code>: the source and destination of the package.</li>
+<li><code>Category</code>: the express category of the package.</li>
+</ul>
+<p>In the basic version of the simulator, we only consider two categories of packages: <code>Standard</code> and <code>Express</code>.</p>
+<ul>
+<li><code>Standard</code> packages are delivered cost-effectively (with minimized cost), but not in a hurry.</li>
+<li><code>Express</code> packages are delivered as soon as possible (with minimized time), but at a higher cost.</li>
+</ul>
+<h4 id="time-ticks">Time Ticks</h4>
+<p>In order to simplify the implementation, the simulator is based on a discrete-event simulation model. Time is divided into discrete time ticks. As a default value, a time tick represents 1 hour.</p>
+<p>In your further design, you can also use an event-driven model to optimize your simulator.</p>
+<h3 id="an-example-of-map">An Example of Map</h3>
+<p>In the following figure, we show an example of a map with 25 stations (points) and 5 centers (circles).</p>
+<p><img src="file:///c:\Users\wangs\OneDrive\20240216：数据结构Data Structure 2024助教相关文件\Project 2\img\map_example.png" alt="Map Example"></p>
+<p>As you can see, red lines are airlines, blue lines are highways and green lines are roads.</p>
+<p>In the project folder, you are also given a data generator script along with this instruction as an example, which can generate stations, centers, routes and packages randomly. You can use this data generator to generate your own data for testing. For further implementations, you can also modify or design your own data generator.</p>
+<h2 id="basic-requirements---simple-simulation">Basic Requirements - Simple Simulation</h2>
+<h3 id="input">Input</h3>
+<p>The simulator will take the following inputs:</p>
+<ul>
+<li>A list of stations and centers, with their properties
+<ul>
+<li><code>ID: string &quot;{'s' or 'c'}{int[0-n]}&quot;</code></li>
+<li><code>Pos: (int[0-100], int[0-100])</code></li>
+<li><code>Throughput: int</code></li>
+<li><code>Delay: int</code></li>
+<li><code>Cost: float</code></li>
+</ul>
+</li>
+<li>A list of routes, with their properties
+<ul>
+<li><code>Src: string</code></li>
+<li><code>Dst: string</code></li>
+<li><code>Time: float</code></li>
+<li><code>Cost: float</code></li>
+</ul>
+</li>
+<li>A list of packages with properties:
+<ul>
+<li><code>ID: string</code></li>
+<li><code>TimeCreated: float</code></li>
+<li><code>Src: string</code></li>
+<li><code>Dst: string</code></li>
+<li><code>Category: int[0-1]</code></li>
+</ul>
+</li>
+</ul>
+<h3 id="output">Output</h3>
+<p>After the simulation, as a basic requirement, the simulator should be able to retrieved each packet's tracking information by its ID.</p>
+<p>The tracking information should include:</p>
+<ul>
+<li><code>Src</code> / <code>Dst</code></li>
+<li><code>TimeCreated</code></li>
+<li><code>TimeDelivered</code></li>
+<li><code>Log</code></li>
+</ul>
+<p>In the tracking information, <code>Log</code> is a list of events, each event contains the following information:</p>
+<ul>
+<li><code>Time</code>: the time of the event</li>
+<li><code>Location</code>: the location of the event</li>
+<li><code>Event</code>: the event type, which can be one of the following:
+<ul>
+<li><code>ARRIVED</code>: the package is arrived at the location's buffer, waiting to be processed. A package starts it's trip from the source location with this event.</li>
+<li><code>PROCESSING</code>: the package finishes its waiting in the buffer, and starts to be processed</li>
+<li><code>SENT</code>: the package starts its trip to the next location. A package finishes its trip at the destination location with this event.</li>
+</ul>
+</li>
+</ul>
+<p>The simulator should also be able to output the list of the packages passed through a given location, sorted by the order they arrived at the location.</p>
+<p>In further implementations, you might also need to add more statistics and visualization according to your design.</p>
+<h3 id="simulation-process">Simulation process</h3>
+<p>Now we introduce the simulation process from a package's perspective.</p>
+<p>Consider a package with <code>ID=1</code>, <code>Src=s1</code>, <code>Dst=s2</code>, <code>Category=Express</code>, and <code>TimeCreated=5</code>.</p>
+<p>It's a <code>Express</code> package, so the simulator will choose the route based on minimized time. Remember that the time or money cost by a path is not only the cost of transportation, but also the cost of processing at each location.</p>
+<blockquote>
+<p><strong>Important notice:</strong> the waiting time at each location keeps changing all the time according to the queueing status (since the arrival of packages is random), so a naive and simple algorithm is to choose and fix the route based on the current status of the system at the time when the package is created. (In further implementations, you can also consider more advanced algorithms, possibly based on the prediction of the system status.)</p>
+</blockquote>
+<p>Suppose the route from <code>s1</code> to <code>s2</code> minimizing the time cost is <code>s1 -&gt; c1 -&gt; s2</code>.</p>
+<p>At <code>time=5</code>, the package is created at <code>s1</code>, and is placed into the buffer of <code>s1</code>. A log event is appended to the tracking information of the package, with <code>Time=5</code>, <code>Location=s1</code>, and <code>Event=ARRIVED</code>.</p>
+<p>Suppose there are no other packages in the buffer of <code>s1</code>, and the package is immediately processed. A log event is appended to the tracking information of the package, with <code>Time=5</code>, <code>Location=s1</code>, and <code>Event=PROCESSING</code>.</p>
+<p>The processing delay of <code>s1</code> is 2, so the package will start its trip to <code>c1</code> at time=7. A log event is appended to the tracking information of the package, with <code>Time=7</code>, <code>Location=s1</code>, and <code>Event=SENT</code>.</p>
+<p>The time cost of the route from <code>s1</code> to <code>c1</code> is 3, so the package will arrive at the buffer of <code>c1</code> at time=10. A log event is appended to the tracking information of the package, with <code>Time=10</code>, <code>Location=c1</code>, and <code>Event=ARRIVED</code>.</p>
+<p>Supposing that there are 100 packages in the buffer of <code>c1</code> when the package is arrived, and the throughput of <code>c1</code> is 10. In this case the package will wait for 10 time ticks before being processed. At time=20, the package will start to be processed. A log event is appended to the tracking information of the package, with <code>Time=20</code>, <code>Location=c1</code>, and <code>Event=PROCESSING</code>.</p>
+<p>The processing delay of <code>c1</code> is 1, so the package will continue its trip to <code>s2</code> at time=21. A log event is appended to the tracking information of the package, with <code>Time=21</code>, <code>Location=c1</code>, and <code>Event=SENT</code>.</p>
+<p>The time cost of the route from <code>c1</code> to <code>s2</code> is 2, so the package will arrive at the buffer of <code>s2</code> at time=23. A log event is appended to the tracking information of the package, with <code>Time=23</code>, <code>Location=s2</code>, and <code>Event=ARRIVED</code>.</p>
+<p>Supposing that there are no other packages in the buffer of <code>s2</code>, and the package is immediately processed. A log event is appended to the tracking information of the package, with <code>Time=23</code>, <code>Location=s2</code>, and <code>Event=PROCESSING</code>.</p>
+<p>The processing delay of <code>s2</code> is 1, so the package will continue its trip at time=24. Since the destination is <code>s2</code>, the package is now considered delivered. A log event is appended to the tracking information of the package, with <code>Time=24</code>, <code>Location=s2</code>, and <code>Event=SENT</code>.</p>
+<h3 id="useful-data-structures-and-algorithms">Useful Data Structures and Algorithms</h3>
+<p>In order to implement the simulator, you will very possibly need to use the following data structures:</p>
+<ul>
+<li><code>Graph</code>: a graph data structure to store the map of the logistics system.</li>
+<li><code>Dictionary</code>/<code>Map</code>: to store the each package's tracking information according to its ID.</li>
+<li><code>LinkedList</code>/<code>Stack</code>: to store the events of each package.</li>
+<li><code>PriorityQueue</code>: to store the events of the simulation, and pop the event with the smallest time.</li>
+</ul>
+<p>You will very likely to use the following algorithms:</p>
+<ul>
+<li>Shortest path algorithms: to calculate the optimal route for each package.</li>
+<li>Sorting algorithms: to sort the packages passed through a given location by the order they arrived at the location.</li>
+</ul>
+<h2 id="further-implementations">Further Implementations</h2>
+<p>Since this is a group project, and a part of your score is based on the ranking of the class, you are encouraged to design and implement more creative features based on the basic implementation.</p>
+<p>Here are some ideas for further implementations, and you are encouraged to come up with your own ideas:</p>
+<h3 id="optimization-of-simulation-algorithm">Optimization of Simulation Algorithm</h3>
+<p>In the basic implementation, we assume that the time during the simulation is discrete. You can consider implementing an event-driven simulation algorithm to optimize the simulation efficiency and better handle large-scale simulation scenarios. In the basic implementation, the optimal route is determined based on the status of the delivery network when the package is created. You can consider implementing more complex path selection algorithms, for example based on the prediction of future states, or dynamically adjusting the path during the transportation process, which may help improve your system's performance, such as package timeliness.</p>
+<h3 id="simulation-of-extreme-scenarios">Simulation of Extreme Scenarios</h3>
+<p>In extreme scenarios, such as on Double Eleven or Black Friday shopping festivals, some stations will have a large number of orders to be sent out, which may cause the transfer station or the route to be overloaded. In such cases, sometimes the seemingly distant route may be the faster choice. You can design some extreme scenarios to test the performance of your system in these scenarios and visualize the load status of transfer stations and routes. Then, you can continue to optimize your system's strategy based on the results of the simulation.</p>
+<h3 id="optimization-of-transportation-strategy">Optimization of Transportation Strategy</h3>
+<p>In the current basic implementation, Express packages and Standard packages are treated equally when queuing in the buffer. In fact, Express packages should have higher priority. However, if we always prioritize the processing of Express packages, Standard packages may never be processed. You can design some transportation strategies to optimize your system in extreme scenarios and compare the impact of doing so on package timeliness and other system performance indicators.</p>
+<h3 id="optimization-of-pricing-strategy">Optimization of Pricing Strategy</h3>
+<p>In the current basic implementation, the transportation time and price of routes are fixed. However, in reality, the transportation capacity and price of routes should be dynamically changing. When transporting a small number of packages, the transportation cost of each package may increase; when transporting a large number of packages, the transportation capacity of the route may be limited, the transportation process may be congested, and the preparation stage before transportation may also take more time. By dynamically adjusting the transportation capacity limit, transportation time, and price of routes, you can more realistically simulate the transportation costs of a logistics company under different conditions. Based on this implementation, you can calculate the average cost of packages, develop a series of fixed or dynamic pricing strategies, simulate the profitability of the logistics company, and consider implementing more complex transportation strategies, such as waiting for packages to fill the entire vehicle before shipping, or choosing load balancing strategies when routes are congested, to optimize key indicators of the transportation system you implemented.</p>
+<h2 id="submission-and-presentation">Submission and Presentation</h2>
+<p>Please submit your project as a zip file. Each group needs to submit these following contents:</p>
+<ul>
+<li>Source code of the project (in the programming language you like)</li>
+<li>Configuration files (e.g. modified data generator, etc.)</li>
+<li>Test cases (e.g. mentioned in the presentation, or you think is interesting to show)</li>
+<li>Project report or user manual (to explain the design and implementation of your project)</li>
+<li>Slides and other materials for the presentation</li>
+<li>Any other materials you think are necessary</li>
+</ul>
+<p>And give a group presentation of no more than 8 minutes on W16. You can use slides or other materials to help your presentation.</p>
+<p>After the presentation, you might be asked some questions by the instructors or classmates.</p>
+<h2 id="contact-us">Contact us</h2>
+<p>If you have any questions about the project, or you need some hints, please don't hesitate to contact TA, either by e-mail or on WeChat.</p>
+<p>WeChat: oreste-maplewithered</p>
+<p>E-mail: <a href="mailto:wangsj2000@sjtu.edu.cn">wangsj2000@sjtu.edu.cn</a></p>
+
+            
+            
+        </body>
+        </html>
