@@ -113,7 +113,7 @@ In the following figure, we show an example of a map with
 - 25 stations (points) 
 - 5 centers (circles). 
 
-![Map Example](img/map_example.png)
+![Map Example](./requirement/img/map_example.png)
 
 As you can see, 
 
