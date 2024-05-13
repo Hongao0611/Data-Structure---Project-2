@@ -1,4 +1,3 @@
-
 import random
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,7 +7,7 @@ from sklearn.cluster import KMeans
 parameters = {
     "station_num": 25,
     "center_num": 5,
-    "packet_num": 1000,
+    "packet_num": 20,
 }
 
 
@@ -134,7 +133,3 @@ def data_gen():
         "edges": edges,
         "packets": packets,
     }
-
-
-if __name__ == '__main__':
-    data = data_gen()
