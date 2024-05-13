@@ -1,30 +1,33 @@
 # Project 2 - Logistics Simulator
 
-In this project, we will make use of the data structures and algorithms we have learned in class to simulate a (simplified) logistics system of a delivery company. 
+在这个项目中，我们将利用我们在课堂上学到的数据结构和算法来模拟一个（简化的）配送公司的物流系统。
 
 ## Evaluation
 
-This is a **GROUP** project, with **4 students** per group. 
+这是一个**小组**项目，每组有 **4 名学生**。
 
-Each group needs to submit the implementation of project (source code, configuration files, test cases, project report or user manual, etc.), and give a group presentation on W16. 
+每个小组需要提交项目的实现（源代码、配置文件、测试用例、项目报告或用户手册等），并在W16上进行小组演示。
 
 ### Score Breakdown
 
-A total of **25 points** is assigned to this project. The evaluation is divided into 3 parts:
+本项目总分为**25 分**。评估分为 3 个部分：
 
-1.	Overall quality based on the design and realization of the project evaluated by instructors (15 pts);
-2.	Presentation quality evaluated by instructors (5 pts);
-3.	Peer evaluation by classmates (5 pts). 
+- 由指导教师根据项目的设计和实现情况对整体质量进行评估（15 分）；
+- 指导教师对演示质量的评价（5 分）；
+  同学互评（5 分）。
 
 ### Peer evaluation
 
-For the 3rd part of the score, each student will grade the other 7 projects. And the average of the project will be computed and ranked. 
+在第三部分的评分中，每位学生将对其他 7 个项目进行评分。然后计算出项目的平均分并进行排名。
 
-Groups ranked 1 and 2 get 20 pts (5\*4), Group 3-4 get 18 pts (4.5\*4), Group 5-6 get 16 pts (4\*4) and Group 7-8 get 14 pts (3.5\*4). 
+- 排名第 1 和第 2 的小组获得 20 分（5\*4）
+- 第 3-4 的小组获得 18 分（4.5\*4）
+- 第 5-6 的小组获得 16 分（4\*4）
+- 第 7-8 的小组获得 14 分（3.5\*4）。
 
-Then, <u>the distribution of these total points to each group member will be decided by group members according to the contribution within the group</u>.
+然后，<u>小组成员将根据小组内的贡献决定每个小组成员的总分分配</u>。
 
-For example, supposing that Group A get 13 pts from part 1, 4 pts from part 2 and ranked 3rd of class in the part 3 getting 18 pts, and decide together the distribution of points of part 3 as `[5, 5, 5, 3]`, then their grade of project 2 will be:
+例如，假设 A 组从第 1 部分获得 13 分，从第 2 部分获得 4 分，在第 3 部分中排名第 3，获得 18 分，并共同决定第 3 部分的分数分布为"[5, 5, 5, 3]"，那么他们在项目 2 中的成绩将是： A 组从第 1 部分获得 13 分，从第 2 部分获得 4 分，在第 3 部分中排名第 3，获得 18 分：
 
 | Group A | Part1 | Part2 | Part3 | Project 2 grade |
 | - | - | - | - | - |
@@ -35,74 +38,92 @@ For example, supposing that Group A get 13 pts from part 1, 4 pts from part 2 an
 
 ## Getting Started
 
-In this project, we will first implement a simple simulator of a logistics system. After that, we will extend the simulator to include more features.
+在本项目中，我们将首先实现一个简单的物流系统模拟器。之后，我们将对模拟器进行扩展，加入更多功能。
 
 ### Definitions
 
 #### Stations and Centers
 
-There are two types of locations in our logistics system: `Stations` and `Centers`.
+我们的物流系统中有两种类型的地点： `Stations` and `Centers`.
 
-<!-- Stations能收件投件，也可以用于中转，Centers只能用于中转。Stations规模较小，中转能力较差，Centers规模较大，中转能力较强。 -->
+- Stations 能收件投件，也可以用于中转
+- Centers 只能用于中转。
+- Stations 规模较小，中转能力较差
+- Centers 规模较大，中转能力较强
 
-- `Stations` are small warehouses that can both receive and send packages from/to customers. That is to say, stations can be the source/destination of packages. They can also be used as transfer stations, but the transfer capacity is limited.
-- `Centers` are large warehouses that can only be used to transfer packages. They are neither source nor destination of any package. They have a larger scale and stronger transfer capacity.
+`Stations` 是小型仓库，可以从客户那里接收和发送包裹。也就是说，站点可以是包裹的源/目的地。它们也可以用作转运站，但转运能力有限。
 
-For each location, we define the following properties:
+`Centers` 是大型仓库，只能用于转运包裹。它们既不是任何包裹的来源也不是目的地。它们的规模更大，转运能力更强。
 
-- `ID`: a unique identifier for each location. ID is composed of a single lowercase letter and a positive integer. For a station, the letter is 's'; for a center, the letter is 'c'. Examples of IDs are `s1`, `s2`, `c1`, `c2`, etc.
-- `Pos`: the geographic location. It can be used to calculate the distance between two locations.
-- `Throughput`: the maximum number of packages that can be processed (transferred) by this location during one time tick (to be discussed later). 
-- `Delay`: the time ticks needed for transferring each package at this location before it is sent to the next location.
-- `Cost`: the (economic) cost of transferring a package at this location. 
+对于每个位置，我们定义以下属性：
+
+- `ID`：每个位置的唯一标识符。ID 由一个小写字母和一个正整数组成。
+  - 对于站点，字母是 "s"；对于中心，字母是 "c"。
+  - ID 的例子有 `s1`、`s2`、`c1`、`c2` 等。
+
+- `Pos`：地理位置。它可用于计算两个位置之间的距离。
+- `Throughput`: 该位置在一个时间刻度内可处理（传输）的最大包裹数（稍后讨论）。
+- `Delay`: 在将每个包裹发送到下一个地点之前，在该地点转移包裹所需的时间刻度。
+- `Cost`: 在该地点转移一个货包的（经济）成本。 
 
 #### Routes
 
-A `Route` is a connection between two locations. It is used to transport packages from one location to another.
+A `Route` 是两个位置之间的连接。它用于将包裹从一个地点运输到另一个地点。
 
-There are several types of routes, and you can also define your own types of routes if your further design requires.
+There are several types of routes, 如果进一步设计需要，您还可以定义自己的`Route` 类型。
 
 - `Road`: connection between two `stations`. 
 - `Highway`: connection between a `station` and a `center`.
 - `Airline`: connection between two `centers`.
 
-Different types of routes have different properties, but they all have the following properties in common:
+不同类型的路由具有不同的 `Route`，但它们都具有以下共同属性：
 
 - `Src` / `Dst`: the source and destination of the route.
 - `Time`: the time needed to transport a package through this route.
 - `Cost`: the (economic) cost of transporting a package through this route.
 
-Both `Time` and `Cost` are calculated with the distance between the source and destination, and the distance is calculated based on the `Pos` of `Src` and `Dst`.
+“Time”和“Cost”都是根据源和目的地之间的距离来计算的，
+
+距离是根据“Src”和“Dst”的“Pos”来计算的。
 
 #### Packages
 
-A `Package` is an object that needs to be delivered from one location to another. It has the following properties:
+“Package” 是需要从一个位置传递到另一个位置的对象。它具有以下属性：
 
 - `ID`: a unique identifier (UUID) for each package, used to track the package.
 - `TimeCreated`: the time when the package is placed into the buffer of the source location. It's a float value.
 - `Src` / `Dst`: the source and destination of the package.
 - `Category`: the express category of the package. 
 
-In the basic version of the simulator, we only consider two categories of packages: `Standard` and `Express`. 
+在模拟器的基本版本中，我们只考虑两类包：“Standard”和“Express”。
 
-- `Standard` packages are delivered cost-effectively (with minimized cost), but not in a hurry.
-- `Express` packages are delivered as soon as possible (with minimized time), but at a higher cost.
+- `Standard` 包裹的交付具有成本效益（成本最小化），但并不匆忙。
+- `Express` 包裹会尽快送达（尽量缩短时间），但成本较高。
 
 #### Time Ticks
 
-In order to simplify the implementation, the simulator is based on a discrete-event simulation model. Time is divided into discrete time ticks. As a default value, a time tick represents 1 hour.
+为了简化实现过程，模拟器基于离散事件模拟模型。时间被划分为离散的时间刻度。默认情况下，一个时间刻度代表 1 小时。
 
-In your further design, you can also use an event-driven model to optimize your simulator.
+在进一步的设计中，您还可以使用事件驱动模型来优化模拟器。
 
 ### An Example of Map
 
-In the following figure, we show an example of a map with 25 stations (points) and 5 centers (circles). 
+In the following figure, we show an example of a map with 
 
-![Map Example](img/map_example.png)
+- 25 stations (points) 
+- 5 centers (circles). 
 
-As you can see, red lines are airlines, blue lines are highways and green lines are roads.
+![Map Example](./requirement/img/map_example.png)
 
-In the project folder, you are also given a data generator script along with this instruction as an example, which can generate stations, centers, routes and packages randomly. You can use this data generator to generate your own data for testing. For further implementations, you can also modify or design your own data generator.
+As you can see, 
+
+- red lines are airlines, 
+- blue lines are highways 
+- green lines are roads.
+
+在项目文件夹中，我们还提供了一个数据生成器脚本和本说明作为示例，该脚本可以生成 stations, centers, routes and packages randomly. 
+
+您可以使用该数据生成器生成自己的测试数据。如需进一步实施，您还可以修改或设计自己的数据生成器。
 
 ## Basic Requirements - Simple Simulation
 
@@ -130,16 +151,16 @@ The simulator will take the following inputs:
 
 ### Output
 
-After the simulation, as a basic requirement, the simulator should be able to retrieved each packet's tracking information by its ID. 
+模拟结束后，作为一项基本要求，模拟器应能根据每个数据包的 ID 获取其跟踪信息。
 
-The tracking information should include:
+跟踪信息应包括
 
   - `Src` / `Dst`
   - `TimeCreated`
   - `TimeDelivered`
   - `Log`
 
-In the tracking information, `Log` is a list of events, each event contains the following information:
+跟踪信息中，‘Log’是一个事件列表，每个事件包含以下信息：
 
 - `Time`: the time of the event
 - `Location`: the location of the event
@@ -148,19 +169,19 @@ In the tracking information, `Log` is a list of events, each event contains the 
   - `PROCESSING`: the package finishes its waiting in the buffer, and starts to be processed
   - `SENT`: the package starts its trip to the next location. A package finishes its trip at the destination location with this event.
 
-The simulator should also be able to output the list of the packages passed through a given location, sorted by the order they arrived at the location.
+模拟器还应该能够输出通过给定位置的包裹列表，并按照到达该位置的顺序进行排序。
 
-In further implementations, you might also need to add more statistics and visualization according to your design. 
+在进一步的实施过程中，您可能还需要根据自己的设计添加更多的统计数据和可视化功能。
 
 ### Simulation process
 
-Now we introduce the simulation process from a package's perspective.
+现在我们从包的角度来介绍一下模拟过程。
 
 Consider a package with `ID=1`, `Src=s1`, `Dst=s2`, `Category=Express`, and `TimeCreated=5`.
 
-It's a `Express` package, so the simulator will choose the route based on minimized time. Remember that the time or money cost by a path is not only the cost of transportation, but also the cost of processing at each location.
+这是一个“Express”套餐，因此模拟器将根据最短时间选择路线。请记住，一条路径的时间或金钱成本不仅是运输成本，还包括每个位置的处理成本。
 
-> **Important notice:** the waiting time at each location keeps changing all the time according to the queueing status (since the arrival of packages is random), so a naive and simple algorithm is to choose and fix the route based on the current status of the system at the time when the package is created. (In further implementations, you can also consider more advanced algorithms, possibly based on the prediction of the system status.)
+> **重要提示：** 每个地点的等待时间都会根据排队状态不断变化（因为包裹的到达是随机的），所以一种简单的算法是根据创建包裹时系统的当前状态来选择和固定路线。(在进一步的实施中，您还可以考虑更先进的算法，可能是基于对系统状态的预测）。
 
 Suppose the route from `s1` to `s2` minimizing the time cost is `s1 -> c1 -> s2`.
 
@@ -198,25 +219,25 @@ You will very likely to use the following algorithms:
 
 ## Further Implementations
 
-Since this is a group project, and a part of your score is based on the ranking of the class, you are encouraged to design and implement more creative features based on the basic implementation. 
+由于这是一个小组项目，而你的部分分数是基于全班同学的排名，因此我们鼓励你在基本实现的基础上设计并实现更有创意的功能。
 
-Here are some ideas for further implementations, and you are encouraged to come up with your own ideas:
+以下是一些进一步实施的想法，我们鼓励你们提出自己的想法：
 
 ### Optimization of Simulation Algorithm
 
-In the basic implementation, we assume that the time during the simulation is discrete. You can consider implementing an event-driven simulation algorithm to optimize the simulation efficiency and better handle large-scale simulation scenarios. In the basic implementation, the optimal route is determined based on the status of the delivery network when the package is created. You can consider implementing more complex path selection algorithms, for example based on the prediction of future states, or dynamically adjusting the path during the transportation process, which may help improve your system's performance, such as package timeliness.
+在基本实现中，我们假设仿真过程中的时间是离散的。您可以考虑采用事件驱动仿真算法来优化仿真效率，并更好地处理大规模仿真场景。在基本实现中，最佳路径是根据创建包裹时的递送网络状态确定的。您可以考虑实施更复杂的路径选择算法，例如基于对未来状态的预测，或在运输过程中动态调整路径，这可能有助于提高系统性能，例如包裹的及时性。
 
 ### Simulation of Extreme Scenarios
 
-In extreme scenarios, such as on Double Eleven or Black Friday shopping festivals, some stations will have a large number of orders to be sent out, which may cause the transfer station or the route to be overloaded. In such cases, sometimes the seemingly distant route may be the faster choice. You can design some extreme scenarios to test the performance of your system in these scenarios and visualize the load status of transfer stations and routes. Then, you can continue to optimize your system's strategy based on the results of the simulation.
+在双十一或黑色星期五购物节等极端情况下，一些站点会有大量订单需要发送，这可能会导致中转站或线路超负荷运转。在这种情况下，有时看似遥远的路线可能是更快的选择。您可以设计一些极端情况，测试系统在这些情况下的性能，并直观地显示转运站和路线的负载状态。然后，您可以根据模拟结果继续优化系统策略。
 
 ### Optimization of Transportation Strategy
 
-In the current basic implementation, Express packages and Standard packages are treated equally when queuing in the buffer. In fact, Express packages should have higher priority. However, if we always prioritize the processing of Express packages, Standard packages may never be processed. You can design some transportation strategies to optimize your system in extreme scenarios and compare the impact of doing so on package timeliness and other system performance indicators.
+在当前的基本实现中，特快数据包和标准数据包在缓冲区排队时待遇相同。事实上，特快数据包的优先级应该更高。但是，如果我们总是优先处理特快包裹，标准包裹可能永远不会被处理。您可以设计一些运输策略，在极端情况下优化系统，并比较这样做对包裹及时性和其他系统性能指标的影响。
 
 ### Optimization of Pricing Strategy
 
-In the current basic implementation, the transportation time and price of routes are fixed. However, in reality, the transportation capacity and price of routes should be dynamically changing. When transporting a small number of packages, the transportation cost of each package may increase; when transporting a large number of packages, the transportation capacity of the route may be limited, the transportation process may be congested, and the preparation stage before transportation may also take more time. By dynamically adjusting the transportation capacity limit, transportation time, and price of routes, you can more realistically simulate the transportation costs of a logistics company under different conditions. Based on this implementation, you can calculate the average cost of packages, develop a series of fixed or dynamic pricing strategies, simulate the profitability of the logistics company, and consider implementing more complex transportation strategies, such as waiting for packages to fill the entire vehicle before shipping, or choosing load balancing strategies when routes are congested, to optimize key indicators of the transportation system you implemented.
+在目前的基本实施方案中，路线的运输时间和价格是固定的。但实际上，路线的运输能力和价格应该是动态变化的。当运输少量包裹时，每个包裹的运输成本可能会增加；当运输大量包裹时，线路的运输能力可能会受到限制，运输过程可能会出现拥堵，运输前的准备阶段也可能会花费更多时间。通过动态调整路线的运输能力限制、运输时间和价格，可以更真实地模拟物流公司在不同条件下的运输成本。在此基础上，您可以计算包裹的平均成本，制定一系列固定或动态定价策略，模拟物流公司的盈利能力，并考虑实施更复杂的运输策略，如等待包裹装满整车后再发货，或在路线拥堵时选择负载平衡策略，以优化您所实施的运输系统的关键指标。
 
 ## Submission and Presentation
 
