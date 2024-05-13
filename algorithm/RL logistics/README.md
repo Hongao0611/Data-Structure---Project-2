@@ -27,14 +27,9 @@
     step(action): 根据Agent的选择执行一步操作，推进时间并获取奖励。
     get_state(): 获取当前物流环境的state，用于评价策略。
     get_reward(): 获取当前时间戳的总奖励。
-    get_packages(): 获取当前未完成配送的包裹列表。
-    get_time(): 获取当前时间戳。
+
 
 
 ### Agent类：
     init(self, env): 初始化Agent，传入环境对象。
     choose_action(): 根据当前状态选择一个操作。
-    get_state(self): 获取当前状态。
-    get_reward(self): 获取当前时间戳的总奖励。
-    get_time(self): 获取当前时间戳。
-    get_packages(self): 获取当前未完成配送的包裹列表。
