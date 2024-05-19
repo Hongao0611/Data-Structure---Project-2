@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import uuid
 from sklearn.cluster import KMeans
 
+
 parameters = {
     "station_num": 25,
     "center_num": 5,
@@ -125,6 +126,57 @@ def data_gen():
     for packet in packets:
         print(uuid.uuid4(), packet)
 
+    M=np.zeros((60,60))
+    for i in range(60):
+        for j in range(60):
+            M[i][j]=np.Infinity
+    for i in range(30):
+        M[2*i][2*i+1]=0.01
+    for i in range(parameters["center_num"]):               #要处理的还有M[2*i][2*i+1]
+        for j in range(parameters["center_num"]):
+            if j > i:
+                M[2*i+1][2*j] = 0.25*np.linalg.norm(
+                    np.array(center_pos[i]) - np.array(center_pos[j]))
+                M[2*j+1][2*i] = M[2*i+1][2*j]
+    for i in range(parameters["center_num"]):
+        for j in range(parameters["station_num"]):
+            if station_labels[j] == i:
+                M[2*i+1][2*j+10] = 0.6*np.linalg.norm(
+                    np.array(center_pos[i]) - np.array(station_pos[j]))
+                M[2*j+11][2*i] = M[2*i+1][2*j+10]
+    for i in range(parameters["station_num"]):
+        for j in range(parameters["station_num"]):
+            if i > j and (np.linalg.norm(np.array(station_pos[i]) - np.array(station_pos[j])) < 30):
+                M[2*i+11][2*j+10] = 0.8*np.linalg.norm(
+                    np.array(station_pos[i]) - np.array(station_pos[j]))
+                M[2*j+11][2*i+10]=M[2*i+11][2*j+10]
+    N=np.zeros((60,60))
+    for i in range(60):
+        for j in range(60):
+            N[i][j]=np.Infinity
+    for i in range(parameters["center_num"]):               #要处理的还有M[2*i][2*i+1]
+        for j in range(parameters["center_num"]):
+            if j > i:
+                N[2*i+1][2*j] = 0.2*np.linalg.norm(
+                    np.array(center_pos[i]) - np.array(center_pos[j]))
+                N[2*j+1][2*i] = N[2*i+1][2*j]
+    for i in range(parameters["center_num"]):
+        for j in range(parameters["station_num"]):
+            if station_labels[j] == i:
+                N[2*i+1][2*j+10] = 0.12*np.linalg.norm(
+                    np.array(center_pos[i]) - np.array(station_pos[j]))
+                N[2*j+11][2*i] = N[2*i+1][2*j+10]
+    for i in range(parameters["station_num"]):
+        for j in range(parameters["station_num"]):
+            if i > j and (np.linalg.norm(np.array(station_pos[i]) - np.array(station_pos[j])) < 30):
+                N[2*i+11][2*j+10] = 0.07*np.linalg.norm(
+                    np.array(station_pos[i]) - np.array(station_pos[j]))
+                N[2*j+11][2*i+10]=N[2*i+11][2*j+10]
+    for i in range(parameters["center_num"]):
+        N[2*i][2*i+1]=center_prop[i][2]
+    for i in range(parameters["station_num"]):
+        N[2*i+10][2*i+11]=station_prop[i][2]
+
     return {
         "station_pos": station_pos,
         "station_prop": station_prop,
@@ -132,4 +184,6 @@ def data_gen():
         "center_prop": center_prop,
         "edges": edges,
         "packets": packets,
+        "money cost":M,
+        "time cost":N,
     }

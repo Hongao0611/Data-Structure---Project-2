@@ -1,18 +1,19 @@
-import data_gen
-import uuid
-import heapq
+from data_gen import *
 from LogisticsNode import Node
 from LogisticsRoute import Route
 from LogisticsPackage import Package
 
 #generate stations, centers, packages.
-data = data_gen.data_gen()
+data = data_gen()
 station_pos = data['station_pos']
 station_prop = data['station_prop']
 center_pos = data['center_pos']
 center_prop = data['center_prop']
 edges = data['edges']
 packets = data['packets']
+moneycost=data["money cost"]
+timecost=data["time cost"]
+
 
 class LogisticsEnv:
     def __init__(self):
@@ -22,6 +23,9 @@ class LogisticsEnv:
         self.min_delay = float('inf')  # Minimum delay for all packages
         self.TimeTick = 0.0  # Current time tick
         self.done = False
+        self.moneycost=moneycost
+        self.timecost=timecost
+
 
     def reset(self):
         self.nodes = {}  # Dictionary of nodes
@@ -55,6 +59,8 @@ class LogisticsEnv:
             print(node)
         self.TimeTick = 0.0  # Current time tick
         print(f"Env reset. min_delay={self.min_delay}, TimeTick={self.TimeTick}")
+        self.moneycost=moneycost
+        self.timecost=timecost
 
         return self.get_state()
 
@@ -81,106 +87,80 @@ class LogisticsEnv:
         self.packages[id] = package
         self.nodes[src].add_package(package)  # 添加到优先队列中
         return package
-
+   
     def find_shortest_time_path(self, src, dst):
-        # Initialize distances and visited nodes
-        distances = {node: float('inf') for node in self.nodes}  # Use a very large number instead of infinity
-        distances[src] = 0
-        visited = set()
+        if src[0]=='s':
+            if len(src)==2:
+                a=int(src[1])*2+10
+            else:
+                a=int(src[1:])*2+10
+        else:
+            a=int(src[1])*2
+        if dst[0]=='s':
+            if len(dst)==2:
+                b=int(dst[1])*2+10
+            else:
+                b=int(dst[1:])*2+10
+        else:
+            b=int(dst[1])*2
 
-        # Initialize priority queue with the source node
-        pq = [(0, src, 0)]  # (distance, current_node, total_time)
-
-        while pq:
-            current_distance, current_node, current_time = heapq.heappop(pq)
-
-            # If the node has already been visited, skip it
-            if current_node in visited:
-                continue
-
-            visited.add(current_node)
-
-            # Check neighbors of the current node
-            for route in self.routes.values():
-                if route.src == current_node and route.dst not in visited:
-                    # Calculate the new distance and time
-                    new_distance = current_distance + route.time
-                    new_time = current_time + route.time + self.nodes[current_node].delay
-
-                    # If this is a shorter path, update the distances and add to the priority queue
-                    if new_distance < distances[route.dst]:
-                        distances[route.dst] = new_distance
-                        heapq.heappush(pq, (new_distance, route.dst, new_time))
-
-        # Construct the path from the source to the destination
-        path = []
-        current_node = dst
-        while current_node != src:
-            path.append(current_node)
-            # 选择下一个节点，不检查是否已经在路径中
-            # 使用 self.routes 来获取当前节点的实际对象
-            current_node = min(
-                [route.dst for route in self.routes.values() if route.src == current_node],
-                key=lambda x: distances[x],
-                default=None
-            )
-            if current_node is None:
-                # No path found
-                return []
-        path.append(src)
-        path.reverse()
-
-        return path
+        n=len(self.timecost)#ordre du graphe
+        Delta=[np. Infinity]*n#étape 1
+        Chemins=[[]]*n# liste des listes des plus courts chemins
+        Delta[a]=0  #étape 1
+        Chemins[a]=[a] #plus court chemin de s0 à s0
+        for k in range(n-1): #étape 2
+            for i in range(n): #étape 3
+                for j in range(n): #étape 3
+                    if self.timecost[ i ][ j]!=0 and Delta[ i]+self.timecost[ i ][ j]<Delta[ j ]: #ét. 4
+                        Delta[ j]=Delta[ i]+self.timecost[ i ][ j ] #étape 4
+                        Chemins[ j]=Chemins[ i ]+[j ] #chemin plus court
+        d=Chemins
+        path=[]
+        for i in range(int((len(d[b])+1)/2)):
+            if d[b][2*i]>9:
+                path.append('s'+str((d[b][2*i]-10)/2))
+            else :
+                path.append('c'+str(d[b][2*i]/2)) 
+        return path 
     
-    def find_lowest_cost_path(self, src, dst):
-        # Initialize distances and visited nodes
-        distances = {node: float('infinity') for node in self.nodes}
-        distances[src] = 0
-        visited = set()
+        
+    
+    def find_lowest_cost_path(self,src, dst):
+        if src[0]=='s':
+            if len(src)==2:
+                a=int(src[1])*2+10
+            else:
+                a=int(src[1:])*2+10
+        else:
+            a=int(src[1])*2
+        if dst[0]=='s':
+            if len(dst)==2:
+                b=int(dst[1])*2+10
+            else:
+                b=int(dst[1:])*2+10
+        else:
+            b=int(dst[1])*2
 
-        # Initialize priority queue with the source node
-        pq = [(0, src)]  # (distance, current_node)
-
-        while pq:
-            current_distance, current_node = heapq.heappop(pq)
-
-            # If the node has already been visited, skip it
-            if current_node in visited:
-                continue
-
-            visited.add(current_node)
-
-            # Check neighbors of the current node
-            for route in self.routes.values():
-                if route.src == current_node and route.dst not in visited:
-                    # Calculate the new distance
-                    new_distance = current_distance + route.cost + self.nodes[current_node].cost
-
-                    # If this is a lower distance, update the distances and add to the priority queue
-                    if new_distance < distances[route.dst]:
-                        distances[route.dst] = new_distance
-                        heapq.heappush(pq, (new_distance, route.dst))
-
-        # Construct the path from the source to the destination
-        path = []
-        current_node = dst
-        while current_node != src:
-            path.append(current_node)
-            # 选择下一个节点，使用 (current_node, neighbor) 来检查路由是否存在
-            previous_node = min(
-                [route.dst for route in self.routes.values() if route.src == current_node],
-                key=lambda x: distances[x],
-                default=None
-            )
-            if previous_node is None:
-                # No path found
-                return []
-            current_node = previous_node
-
-        path.append(src)
-        path.reverse()
-
-        return path
+        n=len(self.moneycost)#ordre du graphe
+        Delta=[np. Infinity]*n#étape 1
+        Chemins=[[]]*n# liste des listes des plus courts chemins
+        Delta[a]=0  #étape 1
+        Chemins[a]=[a] #plus court chemin de s0 à s0
+        for k in range(n-1): #étape 2
+            for i in range(n): #étape 3
+                for j in range(n): #étape 3
+                    if self.moneycost[ i ][ j]!=0 and Delta[ i]+self.moneycost[ i ][ j]<Delta[ j ]: #ét. 4
+                        Delta[ j]=Delta[ i]+self.moneycost[ i ][ j ] #étape 4
+                        Chemins[ j]=Chemins[ i ]+[j ] #chemin plus court
+        d=Chemins
+        path=[]
+        for i in range(int((len(d[b])+1)/2)):
+            if d[b][2*i]>9:
+                path.append('s'+str(int((d[b][2*i]-10)/2)))
+            else :
+                path.append('c'+str(int(d[b][2*i]/2))) 
+        return path 
 
     def get_policy(self, package):
         if package.category == 'Express':
@@ -219,7 +199,7 @@ class LogisticsEnv:
                             package.reward -= self.min_delay
                         else:
                             package.reward -= node.cost
-                    elif package_id in route.package_indices:  # 包裹位于Route
+                    elif package_id in route.package_indices:  # 包裹位于Route TODO debug, it is likely to occur here!!! Check if the package at the end of the Route will be correctly updated to the next node.
                         print(f"is on Route: {route.src}->{route.dst},")
                         if len(node.packages) < node.throughput:
                             route.remove_package(package_id)
@@ -295,7 +275,10 @@ class LogisticsEnv:
             'package_categories': self.get_package_categories(),
             'queue_lengths': self.get_queue_lengths(),
             'route_loads': self.get_route_loads(),
-            'current_time_tick': self.TimeTick
+            'node_loads' : self.get_node_loads(),
+            'current_time_tick': self.TimeTick,
+            'money_cost':self.moneycost,
+            'time_cost':self.timecost
         }
         return state
 
@@ -323,3 +306,33 @@ class LogisticsEnv:
         # Return a dictionary with route tuples (src, dst) as keys and the number of packages on the route as values
         route_loads = {route_tuple: len(route.packages) for route_tuple, route in self.routes.items()}
         return route_loads
+    
+    def get_node_loads(self):
+        # 创建一个字典来存储每个站点的包裹数量
+        stations_packages_number = {}
+        # 遍历所有节点
+        for node_id, node in self.nodes.items():
+            # 计算每个节点的包裹数量
+            stations_packages_number[node_id] = len(node.packages)
+        # 返回包含每个站点包裹数量的字典
+        return stations_packages_number
+    
+    def route(self,package_id):
+        package = self.packages[package_id]
+        stations_base = self.nodes
+        stations_packages_number = self.get_node_loads()
+        routes_packages_number = self.get_route_loads()
+        package_from = package.src #最初的起点。如果学长想要的是当前位置，可以用package.curr
+        package_to = package.dst
+        package_priority = 0 if package.category is "Standard" else "Express"
+
+        route = {
+            stations_base,
+            stations_packages_number,
+            routes_packages_number,
+            package_from,
+            package_to,
+            package_priority
+        }
+
+        return route
