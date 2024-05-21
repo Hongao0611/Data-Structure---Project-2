@@ -8,7 +8,7 @@ from sklearn.cluster import KMeans
 parameters = {
     "station_num": 25,
     "center_num": 5,
-    "packet_num": 20,
+    "packet_num": 5,
 }
 
 
