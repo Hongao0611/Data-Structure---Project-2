@@ -321,12 +321,15 @@ def get_next_node(package_path_list, curr_node):
         return None
 
 class LogisticsEnv:
-    def __init__(self, station_pos,station_prop, center_pos, center_prop, edges, packets, moneycost, timecost):
+    def __init__(self):
         self.nodes = {}  # Dictionary of nodes
         self.routes = {}  # Dictionary of routes
         self.packages = {}  # Dictionary of packages
         self.TimeTick = 0.0  # Current time tick
         self.done = False
+        self.moneycost=moneycost
+        self.timecost=timecost
+
         # Initialize nodes, routes, and packages
         # Add stations as nodes
         for i in range(len(station_pos)):
@@ -358,23 +361,19 @@ class LogisticsEnv:
         self.nodes = {}  # Dictionary of nodes
         self.routes = {}  # Dictionary of routes
         self.packages = {}  # Dictionary of packages
-
         # Initialize nodes, routes, and packages
         # Add stations as nodes
         for i in range(len(station_pos)):
             p = self.add_node(f"s{i}", station_pos[i], *station_prop[i], is_station=True)
             print(f"Center({p.id}, {p.pos}, Throughput: {p.throughput}, Delay: {p.delay}, Cost: {p.cost}), is_station: {p.is_station}")
-
         # Add centers as nodes
         for i in range(len(center_pos)):
             p = self.add_node(f"c{i}", center_pos[i], *center_prop[i])
             print(f"Center({p.id}, {p.pos}, Throughput: {p.throughput}, Delay: {p.delay}, Cost: {p.cost}), is_station: {p.is_station}")
-
         # Add edges as routes
         for edge in edges:
             p = self.add_route(edge[0], edge[1], edge[2], edge[3])
             print(f"Route({p.src}->{p.dst}, Time: {p.time}, Cost: {p.cost})")
-
         # Add packets as packages
         for packet in packets:
             p = self.add_package(uuid.uuid4(), *packet)
@@ -499,10 +498,10 @@ class LogisticsEnv:
     def get_policy(self, package):
         if package.category == 'Express':
             # For Express packages, find the shortest total time path
-            return self.find_shortest_time_path(package.curr, package.dst)
+            return self.find_shortest_time_path(package.src, package.dst)
         else:
             # For Standard packages, find the lowest total cost path
-            return self.find_lowest_cost_path(package.curr, package.dst)
+            return self.find_lowest_cost_path(package.src, package.dst)
 
     def step(self):
         self.done = all(package.done for package in self.packages.values())

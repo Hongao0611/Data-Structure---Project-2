@@ -6,7 +6,7 @@ from sklearn.cluster import KMeans
 parameters = {
     "station_num": 25,
     "center_num": 5,
-    "packet_num": 1000,
+    "packet_num": 2,
 }
 def data_gen():
     # Generate Stations
@@ -321,13 +321,14 @@ def get_next_node(package_path_list, curr_node):
         return None
 
 class LogisticsEnv:
-    def __init__(self, station_pos,station_prop, center_pos, center_prop, edges, packets, moneycost, timecost):
+    def __init__(self):
         self.nodes = {}  # Dictionary of nodes
         self.routes = {}  # Dictionary of routes
         self.packages = {}  # Dictionary of packages
         self.TimeTick = 0.0  # Current time tick
         self.done = False
-        # Initialize nodes, routes, and packages
+        self.moneycost=moneycost
+        self.timecost=timecost
         # Add stations as nodes
         for i in range(len(station_pos)):
             p = self.add_node(f"s{i}", station_pos[i], *station_prop[i], is_station=True)
@@ -358,23 +359,20 @@ class LogisticsEnv:
         self.nodes = {}  # Dictionary of nodes
         self.routes = {}  # Dictionary of routes
         self.packages = {}  # Dictionary of packages
-
+        self.done = False
         # Initialize nodes, routes, and packages
         # Add stations as nodes
         for i in range(len(station_pos)):
             p = self.add_node(f"s{i}", station_pos[i], *station_prop[i], is_station=True)
             print(f"Center({p.id}, {p.pos}, Throughput: {p.throughput}, Delay: {p.delay}, Cost: {p.cost}), is_station: {p.is_station}")
-
         # Add centers as nodes
         for i in range(len(center_pos)):
             p = self.add_node(f"c{i}", center_pos[i], *center_prop[i])
             print(f"Center({p.id}, {p.pos}, Throughput: {p.throughput}, Delay: {p.delay}, Cost: {p.cost}), is_station: {p.is_station}")
-
         # Add edges as routes
         for edge in edges:
             p = self.add_route(edge[0], edge[1], edge[2], edge[3])
             print(f"Route({p.src}->{p.dst}, Time: {p.time}, Cost: {p.cost})")
-
         # Add packets as packages
         for packet in packets:
             p = self.add_package(uuid.uuid4(), *packet)
@@ -399,6 +397,24 @@ class LogisticsEnv:
             'routes': {(src, dst): tuple(pkg.id for _, pkg in route.packages) for (src, dst), route in self.routes.items()}
         }
         return state
+
+    def get_load(self):
+        # 创建一个状态表示，包括决策相关的信息
+        state = {
+            'nodes': {node_id: {
+                'buffer_count': len(node.buffer),
+                'packages_count': len(node.packages),
+                'dones_count': len(node.dones)
+            } for node_id, node in self.nodes.items()},
+            'routes': {(src, dst): len(route.packages) for (src, dst), route in self.routes.items()}
+        }
+        # 转换状态为数值形式
+        converted_state = []
+        for node_id, node_info in state['nodes'].items():
+            converted_state.append([node_info['buffer_count'], node_info['packages_count'], node_info['dones_count']])
+        for route_id, route_info in state['routes'].items():
+            converted_state.append([route_info])
+        return converted_state
 
     def add_node(self, id, pos, throughput, delay, cost, is_station=False):
         self.nodes[id] = Node(id, pos, throughput, delay, cost, is_station)
@@ -460,7 +476,7 @@ class LogisticsEnv:
                 path.append('c'+str(d[b][2*i]/2)) 
         return path 
          
-    def find_lowest_cost_path(self,src, dst):
+    def find_lowest_cost_path(self, src, dst):
         if src[0]=='s':
             if len(src)==2:
                 a=int(src[1])*2+10
@@ -494,17 +510,132 @@ class LogisticsEnv:
                 path.append('s'+str(int((d[b][2*i]-10)/2)))
             else :
                 path.append('c'+str(int(d[b][2*i]/2))) 
-        return path 
-
-    def get_policy(self, package):
-        if package.category == 'Express':
-            # For Express packages, find the shortest total time path
-            return self.find_shortest_time_path(package.curr, package.dst)
+        return path
+    
+    def find_alternative_time_path(self, src, dst, avoid_node):
+        if src[0]=='s':
+            if len(src)==2:
+                a=int(src[1])*2+10
+            else:
+                a=int(src[1:])*2+10
         else:
-            # For Standard packages, find the lowest total cost path
-            return self.find_lowest_cost_path(package.curr, package.dst)
+            a=int(src[1])*2
+        if dst[0]=='s':
+            if len(dst)==2:
+                b=int(dst[1])*2+10
+            else:
+                b=int(dst[1:])*2+10
+        else:
+            b=int(dst[1])*2
+        M=self.timecost
+        if avoid_node[0]=='c':
+            for j in range(60):
+                if len(src)==2:
+                    a=int(src[1])*2   
+                else:
+                    a=int(src[1:])*2
+                M[a][j]=np.Infinity
+                M[j][a]=M[a][j]
 
-    def step(self):
+        if avoid_node[0]=='s':
+            for j in range(60):
+                if len(src)==2:
+                    a=int(src[1])*2+10   
+                else:
+                    a=int(src[1:])*2+10
+                M[a][j]=np.Infinity
+                M[j][a]=M[a][j]
+        n=len(M)#ordre du graphe
+        Delta=[np. Infinity]*n#étape 1
+        Chemins=[[]]*n# liste des listes des plus courts chemins
+        Delta[a]=0  #étape 1
+        Chemins[a]=[a] #plus court chemin de s0 à s0
+        for k in range(n-1): #étape 2
+            for i in range(n): #étape 3
+                for j in range(n): #étape 3
+                    if M[ i ][ j]!=0 and Delta[ i]+M[ i ][ j]<Delta[ j ]: #ét. 4
+                        Delta[ j]=Delta[ i]+M[ i ][ j ] #étape 4
+                        Chemins[ j]=Chemins[ i ]+[j ] #chemin plus court
+        d=Chemins
+        path=[]
+        if Delta[b]>100000:
+            path=[]
+        else:
+            for i in range(int((len(d[b])+1)/2)):
+                if d[b][2*i]>9:
+                    path.append('s'+str((d[b][2*i]-10)/2))
+                else :
+                    path.append('c'+str(d[b][2*i]/2)) 
+        if path == []:
+            return path
+        else:
+            new_path = [path[0]] + self.find_shortest_time_path(path[1],path[-1])
+            return new_path
+
+    def find_alternative_cost_path(self, src, dst, avoid_node):
+        if src[0]=='s':
+            if len(src)==2:
+                a=int(src[1])*2+10
+            else:
+                a=int(src[1:])*2+10
+        else:
+            a=int(src[1])*2
+        if dst[0]=='s':
+            if len(dst)==2:
+                b=int(dst[1])*2+10
+            else:
+                b=int(dst[1:])*2+10
+        else:
+            b=int(dst[1])*2
+        M=self.moneycost
+    
+        if avoid_node[0]=='c':
+            for j in range(60):
+                if len(src)==2:
+                    a=int(src[1])*2   
+                else:
+                    a=int(src[1:])*2
+                M[a][j]=np.Infinity
+                M[j][a]=M[a][j]
+
+        if avoid_node[0]=='s':
+            for j in range(60):
+                if len(src)==2:
+                    a=int(src[1])*2+10   
+                else:
+                    a=int(src[1:])*2+10
+                M[a][j]=np.Infinity
+                M[j][a]=M[a][j]
+               
+
+        n=len(M)#ordre du graphe
+        Delta=[np. Infinity]*n#étape 1
+        Chemins=[[]]*n# liste des listes des plus courts chemins
+        Delta[a]=0  #étape 1
+        Chemins[a]=[a] #plus court chemin de s0 à s0
+        for k in range(n-1): #étape 2
+            for i in range(n): #étape 3
+                for j in range(n): #étape 3
+                    if M[ i ][ j]!=0 and Delta[ i]+M[ i ][ j]<Delta[ j ]: #ét. 4
+                        Delta[ j]=Delta[ i]+M[ i ][ j ] #étape 4
+                        Chemins[ j]=Chemins[ i ]+[j ] #chemin plus court
+        d=Chemins
+        path=[]
+        if Delta[b]>100000:
+            path=[]
+        else:
+            for i in range(int((len(d[b])+1)/2)):
+                if d[b][2*i]>9:
+                    path.append('s'+str((d[b][2*i]-10)/2))
+                else :
+                    path.append('c'+str(d[b][2*i]/2)) 
+        if path == []:
+            return path
+        else:
+            new_path = [path[0]] + self.find_shortest_time_path(path[1],path[-1])
+            return new_path
+        
+    def step(self): #TODO 添加actions作为输入，actions是所有node为包裹决定选哪条route
         self.done = all(package.done for package in self.packages.values())
         if self.done == True:
             print("All packs are done!")
@@ -537,43 +668,104 @@ class LogisticsEnv:
                 # 获取下一个包裹
                 top_package = get_top_package(node)
         return self.get_state()
-
+    
 def print_state(state):
     print("State:")
     print("  Current TimeTick:", state['current_time_tick'])
     print("  Nodes:")
     for node_id, node_info in state['nodes'].items():
-        print(f"    Node {node_id}:")
-        buffer_items = [f"({id}, {category})" for id, category in node_info['buffer']]
-        print(f"      Buffer: {buffer_items}")
-        packages_items = [f"({id}, {category})" for id, category in node_info['packages']]
-        print(f"      Packages: {packages_items}")
-        dones_items = [f"({id}, {category})" for id, category in node_info['dones']]
-        print(f"      Dones: {dones_items}")
+        if any(node_info['packages']) or any(node_info['buffer']) or any(node_info['dones']):
+            print(f"    Node {node_id}:")
+            buffer_items = [f"({id}, {category})" for id, category in node_info['buffer']]
+            packages_items = [f"({id}, {category})" for id, category in node_info['packages']]
+            dones_items = [f"({id}, {category})" for id, category in node_info['dones']]
+            print(f"      Buffer: {buffer_items}")
+            print(f"      Packages: {packages_items}")
+            print(f"      Dones: {dones_items}")
     print("  Routes:")
     for route_id, route_info in state['routes'].items():
-        print(f"    Route {route_id}:")
-        if len(route_info) > 0:  # 检查是否有包裹
-            packages_items = [f"({id})" for id in route_info]
+        if packages_items:=[f"({id})" for id in route_info]:  # 检查是否有包裹
+            print(f"    Route {route_id}:")
             print(f"      Packages: {packages_items}")
-        else:
-            print("      Packages: None")
 
-def test_env():
-    # 初始化环境
+# TODO Agent Monte-Carlo：输入是所有package的路线，输出是更新后的路线
+import random
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.distributions as td
+class Agent:
+    def __init__(self, env):
+        self.env = env
+        self.action_n = len(env.routes.keys()) # 0 for unchanged route, 1 for changed route
+        self.state_n = len(env.nodes.keys())+len(env.routes.keys())
+        # 初始化神经网络
+        self.model = nn.Sequential(
+            nn.Linear(self.state_n, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Linear(64, self.action_n)
+        )
+        # 定义损失函数和优化器
+        self.criterion = nn.CrossEntropyLoss()
+        self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
+        
+    def change_route(self, route):
+        # 检查堆是否为空
+        if not route.packages:
+            return None
+        # 获取堆顶的包裹
+        for _, package in route.packages:
+            if package.delay<=0.1 and get_next_node(package.path,route.src)==route.dst:
+                if package.category == 'Express':
+                    # For Express packages, find the shortest total time path
+                    new_path=self.env.find_alternative_time_path(route.src, package.dst)
+                else:
+                    # For Standard packages, find the lowest total cost path
+                    new_path=self.env.find_alternative_cost_path(route.src, package.dst)
+                if new_path: #如果有新路线，采用；如果没有，不变
+                    print(f"Route for Pack: {package.id} changed from {package.path} to {new_path}!")
+                    package.path = new_path
+                else:
+                    print(f"Alternative Route for Pack: {package.id} unavailable!")
+
+    def choose_action(self):
+        state = self.env.get_load().unsqueeze(0)
+        # 创建一个 Categorical 分布，参数来自模型的输出
+        dist = td.Categorical(logits=self.model(state))
+        # 从分布中采样动作
+        action = dist.sample()
+        # 返回动作的值
+        return action.item()
+    def act(self):
+        actions = self.choose_action()
+        routes = self.env.routes.keys()
+        for route, action in zip(routes, actions):
+            if action:
+                self.change_route(self.env.routes[route])
+            else:
+                continue
+
+def test_env(episode=1):
+    # 初始化环境, 打印初始状态
     env = LogisticsEnv()
-    state = env.reset()
-    
-    # 打印初始状态
     print("Initial State:")
-    print_state(state)
+    print_state(env.reset())
 
-    # 模拟几个时间步
+    # 模拟
     while env.done == False:
         state = env.step() # 获取状态字典
-        print("TimeTick:", env.TimeTick)
         print_state(state)
 
+    print('----------------------------------------------------------------')
+    agent = Agent(env)
+    for _ in range(episode):# 模拟n个episode
+        state = env.reset()
+        while env.done == False:
+            agent.act()
+            state = env.step() # 获取状态字典
+            print_state(state)
 
 # 运行测试
 test_env()
