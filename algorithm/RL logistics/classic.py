@@ -243,7 +243,7 @@ class Node:
                 self.process_packages()
             else: # 如果buffer有包裹，获取堆顶的包裹
                 index, top_package = self.buffer[0]
-                if top_package.category == "Express" or package.category == "Standard": #如果堆顶是express包裹，不做特殊处理；如果堆顶是standard,插入也是standard,不做特殊处理
+                if top_package.category or package.category == 0: #如果堆顶是express包裹，不做特殊处理；如果堆顶是standard,插入也是standard,不做特殊处理
                     heapq.heappush(self.buffer, (self.package_order ,package))
                     package.delay = float('inf')  # Update package delay
                     print(f"Pack added to Node: {self.id};")
@@ -411,7 +411,7 @@ class LogisticsEnv:
         package = Package(id, time_created, src, dst, category)
         
         # Calculate the initial optimal路径 based on the package's category
-        if category == 'Express':
+        if category:
             # 对于Express包裹，找到最短的总时间路径
             optimal_path = self.find_shortest_time_path(src, dst)
         else:
@@ -496,7 +496,7 @@ class LogisticsEnv:
         return path 
 
     def get_policy(self, package):
-        if package.category == 'Express':
+        if package.category:
             # For Express packages, find the shortest total time path
             return self.find_shortest_time_path(package.src, package.dst)
         else:

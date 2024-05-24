@@ -250,7 +250,7 @@ class Node:
                 self.process_packages()
             else: # 如果buffer有包裹，获取堆顶的包裹
                 index, top_package = self.buffer[0]
-                if top_package.category == "Express" or package.category == "Standard": #如果堆顶是express包裹，不做特殊处理；如果堆顶是standard,插入也是standard,不做特殊处理
+                if top_package.category or package.category == 0: #如果堆顶是express包裹，不做特殊处理；如果堆顶是standard,插入也是standard,不做特殊处理
                     heapq.heappush(self.buffer, (self.package_order ,package))
                     package.delay = float('inf')  # Update package delay
                     print(f"Pack added to Node: {self.id};")
@@ -412,7 +412,7 @@ class LogisticsEnv:
         for package in self.packages.values():
             if package.done:
                 continue
-            elif package.category == "Express":
+            elif package.category:
                 reward -= 2
             else:
                 reward -= 1
