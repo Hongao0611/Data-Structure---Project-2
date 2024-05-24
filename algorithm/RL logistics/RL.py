@@ -6,7 +6,7 @@ from sklearn.cluster import KMeans
 parameters = {
     "station_num": 25,
     "center_num": 5,
-    "packet_num": 1000,
+    "packet_num": 100,
 }
 def data_gen():
     # Generate Stations
@@ -49,10 +49,10 @@ def data_gen():
         print(f"c{i}", center_pos[i], center_prop[i])
 
     # Draw Stations and Centers
-    plt.scatter([x[0] for x in station_pos], [x[1]
-                for x in station_pos], c=station_labels, s=50, cmap='viridis')
-    plt.scatter([x[0] for x in center_pos], [x[1]
-                for x in center_pos], c='black', s=200, alpha=0.5)
+#    plt.scatter([x[0] for x in station_pos], [x[1]
+#                for x in station_pos], c=station_labels, s=50, cmap='viridis')
+#    plt.scatter([x[0] for x in center_pos], [x[1]
+#                for x in center_pos], c='black', s=200, alpha=0.5)
 
     # Generate Edges
     edges = []
@@ -66,8 +66,8 @@ def data_gen():
                 # time_cost and money_cost are defined here
                 edges.append((f"c{i}", f"c{j}", 0.25 * dist, 0.2 * dist))
                 edges.append((f"c{j}", f"c{i}", 0.25 * dist, 0.2 * dist))
-                plt.plot([center_pos[i][0], center_pos[j][0]], [
-                         center_pos[i][1], center_pos[j][1]], 'r--')
+#                plt.plot([center_pos[i][0], center_pos[j][0]], [
+#                         center_pos[i][1], center_pos[j][1]], 'r--')
                 print(edges[-2])
                 print(edges[-1])
     print("Edges (center to station):")     # Highways
@@ -79,8 +79,8 @@ def data_gen():
                 # time_cost and money_cost are defined here
                 edges.append((f"c{i}", f"s{j}", 0.6 * dist, 0.12 * dist))
                 edges.append((f"s{j}", f"c{i}", 0.6 * dist, 0.12 * dist))
-                plt.plot([center_pos[i][0], station_pos[j][0]], [
-                         center_pos[i][1], station_pos[j][1]], 'b--')
+#                plt.plot([center_pos[i][0], station_pos[j][0]], [
+#                         center_pos[i][1], station_pos[j][1]], 'b--')
                 print(edges[-2])
                 print(edges[-1])
     print("Edges (station to station):")    # Roads
@@ -92,8 +92,8 @@ def data_gen():
                 # time_cost and money_cost are defined here
                 edges.append((f"s{i}", f"s{j}", 0.8 * dist, 0.07*dist))
                 edges.append((f"s{j}", f"s{i}", 0.8 * dist, 0.07*dist))
-                plt.plot([station_pos[i][0], station_pos[j][0]], [
-                         station_pos[i][1], station_pos[j][1]], 'g--')
+#                plt.plot([station_pos[i][0], station_pos[j][0]], [
+#                         station_pos[i][1], station_pos[j][1]], 'g--')
                 print(edges[-2])
                 print(edges[-1])
     #plt.show()
@@ -122,11 +122,11 @@ def data_gen():
     for packet in packets:
         print(uuid.uuid4(), packet)
 
-    M=np.zeros((60,60))
-    for i in range(60):
-        for j in range(60):
+    M=np.zeros((2*(parameters["center_num"]+parameters["station_num"]),2*(parameters["center_num"]+parameters["station_num"])))
+    for i in range(2*(parameters["center_num"]+parameters["station_num"])):
+        for j in range(2*(parameters["center_num"]+parameters["station_num"])):
             M[i][j]=np.Infinity
-    for i in range(30):
+    for i in range(parameters["center_num"]+parameters["station_num"]):
         M[2*i][2*i+1]=0.01
     for i in range(parameters["center_num"]):               #要处理的还有M[2*i][2*i+1]
         for j in range(parameters["center_num"]):
@@ -137,18 +137,18 @@ def data_gen():
     for i in range(parameters["center_num"]):
         for j in range(parameters["station_num"]):
             if station_labels[j] == i:
-                M[2*i+1][2*j+10] = 0.6*np.linalg.norm(
+                M[2*i+1][2*j+2*parameters["center_num"]] = 0.6*np.linalg.norm(
                     np.array(center_pos[i]) - np.array(station_pos[j]))
-                M[2*j+11][2*i] = M[2*i+1][2*j+10]
+                M[2*j+2*parameters["center_num"]+1][2*i] = M[2*i+1][2*j+2*parameters["center_num"]]
     for i in range(parameters["station_num"]):
         for j in range(parameters["station_num"]):
             if i > j and (np.linalg.norm(np.array(station_pos[i]) - np.array(station_pos[j])) < 30):
-                M[2*i+11][2*j+10] = 0.8*np.linalg.norm(
+                M[2*i+2*parameters["center_num"]+1][2*j+2*parameters["center_num"]] = 0.8*np.linalg.norm(
                     np.array(station_pos[i]) - np.array(station_pos[j]))
-                M[2*j+11][2*i+10]=M[2*i+11][2*j+10]
-    N=np.zeros((60,60))
-    for i in range(60):
-        for j in range(60):
+                M[2*j+2*parameters["center_num"]+1][2*i+2*parameters["center_num"]]=M[2*i+2*parameters["center_num"]+1][2*j+2*parameters["center_num"]]
+    N=np.zeros((2*(parameters["center_num"]+parameters["station_num"]),2*(parameters["center_num"]+parameters["station_num"])))
+    for i in range(2*(parameters["center_num"]+parameters["station_num"])):
+        for j in range(2*(parameters["center_num"]+parameters["station_num"])):
             N[i][j]=np.Infinity
     for i in range(parameters["center_num"]):               #要处理的还有M[2*i][2*i+1]
         for j in range(parameters["center_num"]):
@@ -159,19 +159,19 @@ def data_gen():
     for i in range(parameters["center_num"]):
         for j in range(parameters["station_num"]):
             if station_labels[j] == i:
-                N[2*i+1][2*j+10] = 0.12*np.linalg.norm(
+                N[2*i+1][2*j+2*parameters["center_num"]] = 0.12*np.linalg.norm(
                     np.array(center_pos[i]) - np.array(station_pos[j]))
-                N[2*j+11][2*i] = N[2*i+1][2*j+10]
+                N[2*j+2*parameters["center_num"]+1][2*i] = N[2*i+1][2*j+2*parameters["center_num"]]
     for i in range(parameters["station_num"]):
         for j in range(parameters["station_num"]):
             if i > j and (np.linalg.norm(np.array(station_pos[i]) - np.array(station_pos[j])) < 30):
-                N[2*i+11][2*j+10] = 0.07*np.linalg.norm(
+                N[2*i+2*parameters["center_num"]+1][2*j+2*parameters["center_num"]] = 0.07*np.linalg.norm(
                     np.array(station_pos[i]) - np.array(station_pos[j]))
-                N[2*j+11][2*i+10]=N[2*i+11][2*j+10]
+                N[2*j+2*parameters["center_num"]+1][2*i+2*parameters["center_num"]]=N[2*i+2*parameters["center_num"]+1][2*j+2*parameters["center_num"]]
     for i in range(parameters["center_num"]):
         N[2*i][2*i+1]=center_prop[i][2]
     for i in range(parameters["station_num"]):
-        N[2*i+10][2*i+11]=station_prop[i][2]
+        N[2*i+2*parameters["center_num"]][2*i+2*parameters["center_num"]+1]=station_prop[i][2]
 
     return {
         "station_pos": station_pos,
@@ -448,16 +448,16 @@ class LogisticsEnv:
     def find_shortest_time_path(self, src, dst):
         if src[0]=='s':
             if len(src)==2:
-                a=int(src[1])*2+10
+                a=int(src[1])*2+2*parameters["center_num"]
             else:
-                a=int(src[1:])*2+10
+                a=int(src[1:])*2+2*parameters["center_num"]
         else:
             a=int(src[1])*2
         if dst[0]=='s':
             if len(dst)==2:
-                b=int(dst[1])*2+10
+                b=int(dst[1])*2+2*parameters["center_num"]
             else:
-                b=int(dst[1:])*2+10
+                b=int(dst[1:])*2+2*parameters["center_num"]
         else:
             b=int(dst[1])*2
 
@@ -475,8 +475,8 @@ class LogisticsEnv:
         d=Chemins
         path=[]
         for i in range(int((len(d[b])+1)/2)):
-            if d[b][2*i]>9:
-                path.append('s'+str(int((d[b][2*i]-10)/2)))
+            if d[b][2*i]>2*parameters["center_num"]-1:
+                path.append('s'+str(int((d[b][2*i]-2*parameters["center_num"])/2)))
             else :
                 path.append('c'+str(int(d[b][2*i]/2))) 
         return path 
@@ -484,16 +484,16 @@ class LogisticsEnv:
     def find_lowest_cost_path(self, src, dst):
         if src[0]=='s':
             if len(src)==2:
-                a=int(src[1])*2+10
+                a=int(src[1])*2+2*parameters["center_num"]
             else:
-                a=int(src[1:])*2+10
+                a=int(src[1:])*2+2*parameters["center_num"]
         else:
             a=int(src[1])*2
         if dst[0]=='s':
             if len(dst)==2:
-                b=int(dst[1])*2+10
+                b=int(dst[1])*2+2*parameters["center_num"]
             else:
-                b=int(dst[1:])*2+10
+                b=int(dst[1:])*2+2*parameters["center_num"]
         else:
             b=int(dst[1])*2
 
@@ -511,8 +511,8 @@ class LogisticsEnv:
         d=Chemins
         path=[]
         for i in range(int((len(d[b])+1)/2)):
-            if d[b][2*i]>9:
-                path.append('s'+str(int((d[b][2*i]-10)/2)))
+            if d[b][2*i]>2*parameters["center_num"]-1:
+                path.append('s'+str(int((d[b][2*i]-2*parameters["center_num"])/2)))
             else :
                 path.append('c'+str(int(d[b][2*i]/2))) 
         return path
@@ -520,36 +520,36 @@ class LogisticsEnv:
     def find_alternative_time_path(self, src, dst, avoid_node):
         if src[0]=='s':
             if len(src)==2:
-                a=int(src[1])*2+10
+                a=int(src[1])*2+2*parameters["center_num"]
             else:
-                a=int(src[1:])*2+10
+                a=int(src[1:])*2+2*parameters["center_num"]
         else:
             a=int(src[1])*2
         if dst[0]=='s':
             if len(dst)==2:
-                b=int(dst[1])*2+10
+                b=int(dst[1])*2+2*parameters["center_num"]
             else:
-                b=int(dst[1:])*2+10
+                b=int(dst[1:])*2+2*parameters["center_num"]
         else:
             b=int(dst[1])*2
         M=np.copy(self.timecost)
         if avoid_node[0]=='c':
-            for j in range(60):
-                if len(src)==2:
-                    a=int(src[1])*2   
-                else:
-                    a=int(src[1:])*2
-                M[a][j]=np.Infinity
-                M[j][a]=M[a][j]
+            if len(avoid_node)==2:
+                n=int(avoid_node[1])*2   
+            else:
+                n=int(avoid_node[1:])*2
+            for j in range(2*parameters["center_num"]+2*parameters["station_num"]):
+                M[n][j]=np.Infinity
+                M[j][n]=M[n][j]
 
         if avoid_node[0]=='s':
-            for j in range(60):
-                if len(src)==2:
-                    a=int(src[1])*2+10   
+            for j in range(2*parameters["center_num"]+2*parameters["station_num"]):
+                if len(avoid_node)==2:
+                    m=int(avoid_node[1])*2+2*parameters["center_num"]   
                 else:
-                    a=int(src[1:])*2+10
-                M[a][j]=np.Infinity
-                M[j][a]=M[a][j]
+                    m=int(avoid_node[1:])*2+2*parameters["center_num"]
+                M[m][j]=np.Infinity
+                M[j][m]=M[m][j]
         n=len(M)#ordre du graphe
         Delta=[np. Infinity]*n#étape 1
         Chemins=[[]]*n# liste des listes des plus courts chemins
@@ -567,10 +567,10 @@ class LogisticsEnv:
             path=[]
         else:
             for i in range(int((len(d[b])+1)/2)):
-                if d[b][2*i]>9:
-                    path.append('s'+str((d[b][2*i]-10)/2))
+                if d[b][2*i]>2*parameters["center_num"]-1:
+                    path.append('s'+str(int((d[b][2*i]-2*parameters["center_num"])/2)))
                 else :
-                    path.append('c'+str(d[b][2*i]/2)) 
+                    path.append('c'+str(int(d[b][2*i]/2))) 
         if len(path)<2:
             return []
         else:
@@ -580,37 +580,37 @@ class LogisticsEnv:
     def find_alternative_cost_path(self, src, dst, avoid_node):
         if src[0]=='s':
             if len(src)==2:
-                a=int(src[1])*2+10
+                a=int(src[1])*2+2*parameters["center_num"]
             else:
-                a=int(src[1:])*2+10
+                a=int(src[1:])*2+2*parameters["center_num"]
         else:
             a=int(src[1])*2
         if dst[0]=='s':
             if len(dst)==2:
-                b=int(dst[1])*2+10
+                b=int(dst[1])*2+2*parameters["center_num"]
             else:
-                b=int(dst[1:])*2+10
+                b=int(dst[1:])*2+2*parameters["center_num"]
         else:
             b=int(dst[1])*2
         M=np.copy(self.timecost)
     
         if avoid_node[0]=='c':
-            for j in range(60):
-                if len(src)==2:
-                    a=int(src[1])*2   
-                else:
-                    a=int(src[1:])*2
-                M[a][j]=np.Infinity
-                M[j][a]=M[a][j]
+            if len(avoid_node)==2:
+                m=int(avoid_node[1])*2   
+            else:
+                m=int(avoid_node[1:])*2
+            for j in range(2*parameters["center_num"]+2*parameters["station_num"]):
+                M[m][j]=np.Infinity
+                M[j][m]=M[m][j]
 
         if avoid_node[0]=='s':
-            for j in range(60):
-                if len(src)==2:
-                    a=int(src[1])*2+10   
-                else:
-                    a=int(src[1:])*2+10
-                M[a][j]=np.Infinity
-                M[j][a]=M[a][j]
+            if len(avoid_node)==2:
+                n=int(avoid_node[1])*2+2*parameters["center_num"]   
+            else:
+                n=int(avoid_node[1:])*2+2*parameters["center_num"]
+            for j in range(2*parameters["center_num"]+2*parameters["station_num"]):
+                M[n][j]=np.Infinity
+                M[j][n]=M[n][j]
     
         n=len(M)#ordre du graphe
         Delta=[np. Infinity]*n#étape 1
@@ -629,10 +629,10 @@ class LogisticsEnv:
             path=[]
         else:
             for i in range(int((len(d[b])+1)/2)):
-                if d[b][2*i]>9:
-                    path.append('s'+str((d[b][2*i]-10)/2))
+                if d[b][2*i]>2*parameters["center_num"]-1:
+                    path.append('s'+str(int((d[b][2*i]-2*parameters["center_num"])/2)))
                 else :
-                    path.append('c'+str(d[b][2*i]/2)) 
+                    path.append('c'+str(int(d[b][2*i]/2))) 
         if len(path)<2:
             return []
         else:
@@ -736,18 +736,18 @@ class Agent: # TODO 检查程序是否正确
         print(f"Action_N: {self.action_n}, State_N: {self.state_n}")
         # 初始化神经网络
         self.model = nn.Sequential(
-            nn.Linear(self.state_n, 64),
+            nn.Linear(self.state_n, 128),
             nn.ReLU(),
-            nn.Linear(64, 64),
+            nn.Linear(128, 128),
             nn.ReLU(),
-            nn.Linear(64, self.action_n)
+            nn.Linear(128, self.action_n)
         )
         # 定义损失函数和优化器
         self.criterion = nn.MSELoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
-        self.gamma = 0.99
+        self.gamma = 0.999999
         self.batch_size = 64
-        self.epsilon = 1
+        self.epsilon = 0.9
         # 经验回放缓冲区
         self.memory = deque(maxlen=buffer_size)
         # 目标网络
@@ -763,7 +763,6 @@ class Agent: # TODO 检查程序是否正确
         #print(f"Model input shape: {self.model[0].in_features}")  # 打印模型的输入维度
         #print(state)
         #print(f"State shape: {state.shape}")  # 打印state的形状
-
         # 使用ε-greedy策略选择动作
         if random.random() < self.epsilon:
             #print("random action!")
@@ -772,11 +771,10 @@ class Agent: # TODO 检查程序是否正确
             #print("NOT random action!")
             state = torch.FloatTensor(state)
             q_values = self.model(state)
-            actions = q_values.argmax().item()
-        
+            actions = [1 if i >0 else 0 for i in q_values.tolist()]
         #dist = td.Categorical(logits=q_values)
         #actions = [dist.sample().item() for _ in self.env.routes.keys()]
-        #print(f"Action:{actions}")
+        print(f"Action:{actions}")
         return actions
 
     def store_transition(self, state, action, reward, next_state):
@@ -788,6 +786,7 @@ class Agent: # TODO 检查程序是否正确
         self.memory.append((state, action, reward, next_state))
 
     def train(self, n_episodes):
+        rewards = []
         for episode in range(n_episodes):
             total_reward = 0
             state = self.env.reset()
@@ -798,8 +797,14 @@ class Agent: # TODO 检查程序是否正确
                 state = next_state
                 #print(f"Reward: {type(reward)}; {reward}")
                 total_reward += reward
+                rewards.append(total_reward)
             print(f"Episode {episode+1}/{n_episodes}, Total Reward: {total_reward}")
-        
+            self.epsilon *=0.9 #epsilon-decay policy
+        plt.plot(rewards)
+        plt.xlabel('Episode')
+        plt.ylabel('Total Reward')
+        plt.title('Total Reward vs Episode')
+        plt.show()
         for _ in range(n_episodes):
             batch = random.sample(self.memory, self.batch_size)  # 随机采样batch_size条经验
             states, actions, rewards, next_states = zip(*batch)
@@ -861,7 +866,7 @@ def test_env(n=10):
 def test_RL():
     env = LogisticsEnv()
     agent = Agent(env)
-    agent.train(3)
+    agent.train(1000)
     agent.test()
 
 # 运行测试
