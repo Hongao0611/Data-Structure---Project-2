@@ -1,0 +1,3 @@
+[submodule "ESLogistic"]
+	path = ESLogistic
+	url = https://github.com/guomaimang/ESLogistic
