@@ -6,7 +6,7 @@ from sklearn.cluster import KMeans
 parameters = {
     "station_num": 25,
     "center_num": 5,
-    "packet_num": 100,
+    "packet_num": 10,
 }
 def data_gen():
     # Generate Stations
@@ -195,14 +195,17 @@ edges = data['edges']
 packets = data['packets']
 moneycost = data["money cost"]
 timecost = data["time cost"]
+time_global = 0.0
 
-class Package: #TODO add self.history
+class Package:
     def __init__(self, id, time_created, src, dst, category):
         self.id = id
         self.time_created = time_created
+        self.time_arrived = float('inf')
         self.src = src
         self.dst = dst
-        self.category = category  # 'Express' or 'Standard'
+        self.category = category  # 1 for 'Express' and 0 for 'Standard'
+        self.history = []
         self.path = []  # List of nodes on the expected path
         self.delay = float('inf')  # Remaining delay before processing
         self.done = False
@@ -222,18 +225,22 @@ class Node:
         self.buffer = []
         self.packages = []
         self.dones = []
+        self.history = []
         self.package_order = 0
         heapq.heapify(self.packages)  # Convert the list to a heap
         heapq.heapify(self.buffer)
 
     def reset(self):
+        self.buffer = []
         self.packages = []
         self.dones = []
+        self.history = []
         self.package_order = 0
         heapq.heapify(self.packages)  # Convert the list to a heap
         heapq.heapify(self.buffer)
 
     def add_package(self, package):
+        self.history.append(package.id)
         # 如果是包裹的终点，加入done，而不是buffer
         if package.dst == self.id:
             self.dones.append(package)
@@ -267,6 +274,7 @@ class Node:
             if package.done == False:
                 heapq.heappush(self.packages, (index, package))
                 package.delay = self.delay
+                package.history.append((time_global, self.id, f"PROCESSING: In Node: {self.id}"))
             else:
                 self.dones.append(package)
 
@@ -288,14 +296,17 @@ class Route:
         self.cost = cost
         self.package_order = 0
         self.packages = []  # Use a list for packages on the route
+        self.history = []
         heapq.heapify(self.packages)  # Convert the list to a heap
     
     def reset(self):
         self.package_order = 0
         self.packages = []  # Use a list for packages on the route
+        self.history = []
         heapq.heapify(self.packages)  # Convert the list to a heap
 
     def add_package(self, package):
+        self.history.append(package.id)
         self.package_order += 1
         # Packages are added to the route.packages in the order they arrive
         heapq.heappush(self.packages, (self.package_order ,package))
@@ -332,6 +343,13 @@ def get_next_node(package_path_list, curr_node):
                 return package_path_list[i + 1]
         print("Error! curr_node not found in path!")
         return None
+
+def get_pack_num(route):
+    return len(route.packages)
+# TODO
+def update_distance():
+    return 0
+# TODO
 
 class LogisticsEnv:
     def __init__(self):
@@ -688,6 +706,7 @@ class LogisticsEnv:
                 next_node_id = get_next_node(top_package.path, node.id)
                 route = self.routes[(node.id,next_node_id)]
                 route.add_package(top_package)
+                top_package.history.append((self.TimeTick, node.id, f"SENT: From Node: {node.id} to Route: {route.id}"))
                 # 获取下一个包裹
                 top_package = get_top_package(node)
 
@@ -699,8 +718,13 @@ class LogisticsEnv:
                 # 往Node中添加包裹
                 next_node = self.nodes[route.dst]
                 next_node.add_package(top_package)
+                top_package.history.append((self.TimeTick, route.id,f"ARRIVED: From Node: {route.dst} to Route: {route.id}", ))
+                if top_package.dst == route.dst:
+                    top_package.time_arrived = self.TimeTick
                 # 获取下一个包裹
                 top_package = get_top_package(node)
+        
+        _ = update_distance() #TODO 更新函数
         return self.get_load(), self.get_reward()
     
 def print_state(state):
@@ -728,7 +752,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.distributions as td
 from collections import deque
-class Agent: # TODO 检查程序是否正确
+class Agent: 
     def __init__(self, env, buffer_size=10000):
         self.env = env
         self.action_n = len(env.routes.keys())  # 0 for unchanged route, 1 for changed route
@@ -851,23 +875,38 @@ class Agent: # TODO 检查程序是否正确
             total_reward += reward
         print(f"Total Reward: {total_reward}")
 
-def test_env(n=10):
+def test_classic():
     # 初始化环境, 打印初始状态
     env = LogisticsEnv()
-    print("Initial State:")
-    print_state(env.get_state())
+    #print("Initial State:")
+    #print_state(env.get_state())
     # 模拟
-    for _ in range(n):
-        while env.done == False:
-            env.step() # 获取状态字典
-            print_state(env.get_state())
-        env.reset()
+    total_reward = 0
+    while env.done == False:
+        _, reward = env.step() # 获取状态字典
+        total_reward += reward
+        #print_state(env.get_state())
+    # 打印包裹记录
+    for pack in env.packages.values():
+        print(f"包裹ID: {pack.id}")
+        for entry in pack.history:
+            time, location, event = entry
+            print(f"时间: {time}, 地点: {location}, 事件: {event}")
+        print("-" * 40)  # 输出分隔线
+    # 打印节点和路由记录
+    for node in env.nodes.values():
+            for entry in node.history:
+                print(f"Node: {node.id}, History: {node.history}")
+    for route in env.routes.values():
+            for entry in route.history:
+                print(f"Route: {route.id}, History: {route.history}")
+    print(f"Total Time: {env.TimeTick}, Total Cost: {total_reward}")
 
 def test_RL():
     env = LogisticsEnv()
     agent = Agent(env)
-    agent.train(1000)
+    agent.train(200)
     agent.test()
 
 # 运行测试
-test_RL()
+test_classic()
