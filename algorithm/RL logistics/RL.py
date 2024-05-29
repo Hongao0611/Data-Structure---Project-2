@@ -685,7 +685,7 @@ class LogisticsEnv:
     def step(self, actions=None): 
         self.done = all(package.done for package in self.packages.values())
         if self.done == True:
-            print("All packs are done!")
+            #print("All packs are done!")
             return self.get_load(), self.get_reward()
         
         if actions != None:
@@ -760,7 +760,7 @@ class Agent:
         self.env = env
         self.action_n = len(env.routes.keys())  # 0 for unchanged route, 1 for changed route
         self.state_n = 2*len(env.nodes.keys()) + len(env.routes.keys())
-        print(f"Action_N: {self.action_n}, State_N: {self.state_n}")
+        #print(f"Action_N: {self.action_n}, State_N: {self.state_n}")
         # 初始化神经网络
         self.model = nn.Sequential(
             nn.Linear(self.state_n, 256),
@@ -814,6 +814,7 @@ class Agent:
 
     def train(self, n_episodes):
         rewards = []
+        time = []
         for episode in range(n_episodes):
             total_reward = 0
             state = self.env.reset()
@@ -824,15 +825,18 @@ class Agent:
                 state = next_state
                 #print(f"Reward: {type(reward)}; {reward}")
                 total_reward += reward
-                rewards.append(total_reward)
-            print(f"Episode {episode+1}/{n_episodes}, Total Reward: {total_reward}")
+            rewards.append(total_reward)
+            time.append(self.env.TimeTick)
+            print(f"Episode {episode+1}/{n_episodes}, Total Reward: {total_reward}, Time: {self.env.TimeTick}")
             self.epsilon *=0.99 #epsilon-decay policy
-        plt.plot(rewards)
+        plt.plot(rewards,label='Reward')
+        plt.plot(time, label='Time')
         plt.xlabel('Episode')
-        plt.ylabel('Total Reward')
-        plt.title('Total Reward vs Episode')
+        plt.ylabel('Total Reward and Time')
+        plt.title('Total Reward and Time vs Episode')
+        plt.legend()
         plt.show()
-        plt.savefig('./pics/RL.png')
+        plt.savefig('./pics/RL_training.png')
         for _ in range(n_episodes):
             batch = random.sample(self.memory, self.batch_size)  # 随机采样batch_size条经验
             states, actions, rewards, next_states = zip(*batch)

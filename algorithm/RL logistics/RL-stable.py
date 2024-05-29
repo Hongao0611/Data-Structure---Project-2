@@ -633,6 +633,7 @@ class Agent:
 
     def train(self, n_episodes):
         rewards = []
+        time = []
         for episode in range(n_episodes):
             total_reward = 0
             state = self.env.reset()
@@ -643,15 +644,18 @@ class Agent:
                 state = next_state
                 #print(f"Reward: {type(reward)}; {reward}")
                 total_reward += reward
-                rewards.append(total_reward)
-            print(f"Episode {episode+1}/{n_episodes}, Total Reward: {total_reward}")
+            rewards.append(total_reward)
+            time.append(self.env.TimeTick)
+            print(f"Episode {episode+1}/{n_episodes}, Total Reward: {total_reward}, Time: {self.env.TimeTick}")
             self.epsilon *=0.99 #epsilon-decay policy
-        plt.plot(rewards)
+        plt.plot(rewards,label='Reward')
+        plt.plot(time, label='Time')
         plt.xlabel('Episode')
-        plt.ylabel('Total Reward')
-        plt.title('Total Reward vs Episode')
+        plt.ylabel('Total Reward and Time')
+        plt.title('Total Reward and Time vs Episode')
+        plt.legend()
         plt.show()
-        plt.savefig('RL_training.png')
+        plt.savefig('./pics/RL_training.png')
         for _ in range(n_episodes):
             batch = random.sample(self.memory, self.batch_size)  # 随机采样batch_size条经验
             states, actions, rewards, next_states = zip(*batch)
@@ -743,7 +747,7 @@ def test_classic():
 def test_RL():
     env = LogisticsEnv()
     agent = Agent(env)
-    agent.train(200)
+    agent.train(500)
     agent.test()
 
 # 运行测试
