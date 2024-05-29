@@ -6,7 +6,7 @@ from sklearn.cluster import KMeans
 parameters = {
     "station_num": 25,
     "center_num": 5,
-    "packet_num": 10,
+    "packet_num": 1000,
 }
 def data_gen():
     # Generate Stations
@@ -253,18 +253,18 @@ class Node:
             if not self.buffer:
                 heapq.heappush(self.buffer, (self.package_order ,package))
                 package.delay = float('inf')  # Update package delay
-                print(f"Pack added to Node: {self.id};")
+                #print(f"Pack added to Node: {self.id};")
                 self.process_packages()
             else: # 如果buffer有包裹，获取堆顶的包裹
                 index, top_package = self.buffer[0]
                 if top_package.category or package.category == 0: #如果堆顶是express包裹，不做特殊处理；如果堆顶是standard,插入也是standard,不做特殊处理
                     heapq.heappush(self.buffer, (self.package_order ,package))
                     package.delay = float('inf')  # Update package delay
-                    print(f"Pack added to Node: {self.id};")
+                    #print(f"Pack added to Node: {self.id};")
                 else: #如果堆顶是standard包裹,插入是express
                     heapq.heappush(self.buffer, (index-1 ,package))
                     package.delay = float('inf')  # Update package delay
-                    print(f"Pack added to Node: {self.id};")
+                    #print(f"Pack added to Node: {self.id};")
 
                 self.process_packages()
     
@@ -281,7 +281,7 @@ class Node:
     def remove_package(self):
         if self.packages and self.packages[0][1].delay <= 0:
             _, package = heapq.heappop(self.packages)  # Remove the package with the least priority (oldest)
-            print(f"package: {package.id} removed from Node: {self.id}.")
+            #print(f"package: {package.id} removed from Node: {self.id}.")
             self.process_packages()
             return package
         elif self.packages[0][1].delay > 0:
@@ -311,12 +311,12 @@ class Route:
         # Packages are added to the route.packages in the order they arrive
         heapq.heappush(self.packages, (self.package_order ,package))
         package.delay = self.time  # Update package delay
-        print(f"Pack added to Route: {self.src}->{self.dst};")
+        #print(f"Pack added to Route: {self.src}->{self.dst};")
 
     def remove_package(self):
         if self.packages and self.packages[0][1].delay <= 0:
             _, package = heapq.heappop(self.packages)  # Remove the package with the least priority (oldest)            
-            print(f"package: {package.id} removed from Route: {self.id}.")
+            #print(f"package: {package.id} removed from Route: {self.id}.")
             return package
         elif self.packages[0][1].delay > 0:
             print(f"Error! Removing Package: {package.id} not done from Route: {self.id}!")
@@ -353,6 +353,7 @@ def update_distance():
 
 class LogisticsEnv:
     def __init__(self):
+        print("Env initialzing...")
         self.nodes = {}  # Dictionary of nodes
         self.routes = {}  # Dictionary of routes
         self.packages = {}  # Dictionary of packages
@@ -375,9 +376,10 @@ class LogisticsEnv:
         # Add packets as packages
         for packet in packets:
             p = self.add_package(uuid.uuid4(), *packet)
-            print(f"Package {p.id} added, delay={p.delay}, src={p.src}, dst={p.dst}, done={p.done}, path={p.path}")
+            #print(f"Package {p.id} added, delay={p.delay}, src={p.src}, dst={p.dst}, done={p.done}, path={p.path}")
+        print("Env initialzed!")
     def reset(self):
-        print("Reseting......")
+        #print("Env Reseting......")
         for node, route in zip(self.nodes.values(),self.routes.values()):
             node.reset()
             route.reset()
@@ -389,9 +391,9 @@ class LogisticsEnv:
         # Add packets as packages
         for packet in packets:
             p = self.add_package(uuid.uuid4(), *packet)
-            print(f"Package {p.id} added, delay={p.delay}, src={p.src}, dst={p.dst}, done={p.done}, path={p.path}")
+            #print(f"Package {p.id} added, delay={p.delay}, src={p.src}, dst={p.dst}, done={p.done}, path={p.path}")
 
-        print(f"Env reset. TimeTick={self.TimeTick}")
+        #print(f"Env reset!")
         return self.get_load()
     
     def get_state(self):
@@ -657,7 +659,7 @@ class LogisticsEnv:
             new_path = [path[0]] + self.find_shortest_time_path(path[1],path[-1])
             return path #TODO new_path
 
-    def change_route(self, route):#TODO 检查是否正确更改路径
+    def change_route(self, route):
         src_node = self.nodes[route.src]
         # 检查堆是否为空
         if src_node.packages:
@@ -665,8 +667,8 @@ class LogisticsEnv:
             for _, package in src_node.packages:
                 next_node_id = get_next_node(package.path,src_node.id)
                 if package.delay<=0.1 and next_node_id == route.dst and next_node_id != package.dst:
-                    print(f"有符合条件的包裹！{package}")
-                    print(type(next_node_id),next_node_id)
+                    #print(f"有符合条件的包裹！{package}")
+                    #print(type(next_node_id),next_node_id)
                     if package.category:
                         # For Express packages, find the shortest total time path
                         new_path=self.find_alternative_time_path(src_node.id, package.dst, next_node_id)
@@ -674,9 +676,10 @@ class LogisticsEnv:
                         # For Standard packages, find the lowest total cost path
                         new_path=self.find_alternative_cost_path(src_node.id, package.dst, next_node_id)
                     if new_path == []: #如果有新路线，采用；如果没有，不变
-                        print(f"Alternative Route unavailable!")
+                        #print(f"Alternative Route unavailable!")
+                        continue
                     else:
-                        print(f"Route for Pack: {package.id} changed from {package.path} to {new_path}!")
+                        #print(f"Route for Pack: {package.id} changed from {package.path} to {new_path}!")
                         package.path = new_path
                         
     def step(self, actions=None): 
@@ -753,23 +756,25 @@ import torch.optim as optim
 import torch.distributions as td
 from collections import deque
 class Agent: 
-    def __init__(self, env, buffer_size=10000):
+    def __init__(self, env, buffer_size=100000):
         self.env = env
         self.action_n = len(env.routes.keys())  # 0 for unchanged route, 1 for changed route
         self.state_n = 2*len(env.nodes.keys()) + len(env.routes.keys())
         print(f"Action_N: {self.action_n}, State_N: {self.state_n}")
         # 初始化神经网络
         self.model = nn.Sequential(
-            nn.Linear(self.state_n, 128),
+            nn.Linear(self.state_n, 256),
             nn.ReLU(),
-            nn.Linear(128, 128),
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, 128),
             nn.ReLU(),
             nn.Linear(128, self.action_n)
         )
         # 定义损失函数和优化器
         self.criterion = nn.MSELoss()
-        self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
-        self.gamma = 0.999999
+        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-4)
+        self.gamma = 0.99
         self.batch_size = 64
         self.epsilon = 0.9
         # 经验回放缓冲区
@@ -796,9 +801,7 @@ class Agent:
             state = torch.FloatTensor(state)
             q_values = self.model(state)
             actions = [1 if i >0 else 0 for i in q_values.tolist()]
-        #dist = td.Categorical(logits=q_values)
-        #actions = [dist.sample().item() for _ in self.env.routes.keys()]
-        print(f"Action:{actions}")
+        #print(f"Action:{actions}")
         return actions
 
     def store_transition(self, state, action, reward, next_state):
@@ -823,12 +826,13 @@ class Agent:
                 total_reward += reward
                 rewards.append(total_reward)
             print(f"Episode {episode+1}/{n_episodes}, Total Reward: {total_reward}")
-            self.epsilon *=0.9 #epsilon-decay policy
+            self.epsilon *=0.99 #epsilon-decay policy
         plt.plot(rewards)
         plt.xlabel('Episode')
         plt.ylabel('Total Reward')
         plt.title('Total Reward vs Episode')
         plt.show()
+        plt.savefig('./pics/RL.png')
         for _ in range(n_episodes):
             batch = random.sample(self.memory, self.batch_size)  # 随机采样batch_size条经验
             states, actions, rewards, next_states = zip(*batch)
@@ -863,6 +867,7 @@ class Agent:
             
             # 更新目标网络
             self.update_target_model()
+        torch.save(self.model, './models/model_complete.pth')
 
     def test(self):
         state = self.env.reset()
@@ -878,8 +883,6 @@ class Agent:
 def test_classic():
     # 初始化环境, 打印初始状态
     env = LogisticsEnv()
-    #print("Initial State:")
-    #print_state(env.get_state())
     # 模拟
     total_reward = 0
     while env.done == False:
@@ -905,8 +908,8 @@ def test_classic():
 def test_RL():
     env = LogisticsEnv()
     agent = Agent(env)
-    agent.train(200)
+    agent.train(1000)
     agent.test()
 
 # 运行测试
-test_classic()
+test_RL()

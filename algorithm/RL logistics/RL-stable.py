@@ -650,6 +650,7 @@ class Agent:
         plt.xlabel('Episode')
         plt.ylabel('Total Reward')
         plt.title('Total Reward vs Episode')
+        plt.show()
         plt.savefig('RL_training.png')
         for _ in range(n_episodes):
             batch = random.sample(self.memory, self.batch_size)  # 随机采样batch_size条经验
@@ -685,6 +686,7 @@ class Agent:
             
             # 更新目标网络
             self.update_target_model()
+        torch.save(self.model, './models/model_complete.pth')
 
     def test(self):
         state = self.env.reset()
