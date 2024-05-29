@@ -209,7 +209,7 @@ class LogisticsEnv:
         # Add packets as packages
         for packet in packets:
             p = self.add_package(uuid.uuid4(), *packet)
-            print(f"Package {p.id} added, delay={p.delay}, src={p.src}, dst={p.dst}, done={p.done}, path={p.path}")
+            #print(f"Package {p.id} added, delay={p.delay}, src={p.src}, dst={p.dst}, done={p.done}, path={p.path}")
 
         print(f"Env reset. TimeTick={self.TimeTick}")
         return self.get_load()
@@ -477,7 +477,7 @@ class LogisticsEnv:
             new_path = [path[0]] + self.find_shortest_time_path(path[1],path[-1])
             return path #TODO new_path
 
-    def change_route(self, route):#TODO 检查是否正确更改路径
+    def change_route(self, route):
         src_node = self.nodes[route.src]
         # 检查堆是否为空
         if src_node.packages:
@@ -575,23 +575,25 @@ import torch.distributions as td
 from collections import deque
 import matplotlib.pyplot as plt
 class Agent: 
-    def __init__(self, env, buffer_size=10000):
+    def __init__(self, env, buffer_size=100000):
         self.env = env
         self.action_n = len(env.routes.keys())  # 0 for unchanged route, 1 for changed route
         self.state_n = 2*len(env.nodes.keys()) + len(env.routes.keys())
         #print(f"Action_N: {self.action_n}, State_N: {self.state_n}")
         # 初始化神经网络
         self.model = nn.Sequential(
-            nn.Linear(self.state_n, 128),
+            nn.Linear(self.state_n, 256),
             nn.ReLU(),
-            nn.Linear(128, 128),
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, 128),
             nn.ReLU(),
             nn.Linear(128, self.action_n)
         )
         # 定义损失函数和优化器
         self.criterion = nn.MSELoss()
-        self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
-        self.gamma = 0.999999
+        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-4)
+        self.gamma = 0.99
         self.batch_size = 64
         self.epsilon = 0.9
         # 经验回放缓冲区
@@ -618,8 +620,6 @@ class Agent:
             state = torch.FloatTensor(state)
             q_values = self.model(state)
             actions = [1 if i >0 else 0 for i in q_values.tolist()]
-        #dist = td.Categorical(logits=q_values)
-        #actions = [dist.sample().item() for _ in self.env.routes.keys()]
         #print(f"Action:{actions}")
         return actions
 
