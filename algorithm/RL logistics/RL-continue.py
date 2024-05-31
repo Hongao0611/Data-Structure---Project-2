@@ -29,7 +29,6 @@ class Package:
         self.path = []  # List of nodes on the expected path
         self.delay = float('inf')  # Remaining delay before processing
         self.done = False
-        self.reward = 0.0  # Current Reward/cost for this package
     def __str__(self):
         #return f"Package({self.id}, TimeCreated: {self.time_created}, Src: {self.src}, Dst: {self.dst}, Category: {self.category})"
         return f"Package({self.id}, Path: {self.path})"
@@ -581,7 +580,7 @@ class Agent:
         self.state_n = 2*len(env.nodes.keys()) + len(env.routes.keys())
         #print(f"Action_N: {self.action_n}, State_N: {self.state_n}")
         # 初始化神经网络
-        self.model = torch.load('./models/model_complete.pth')
+        self.model = torch.load('./models/model_alternative.pth')
         # 定义损失函数和优化器
         self.criterion = nn.MSELoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr=1e-2)
@@ -682,7 +681,7 @@ class Agent:
             
             # 更新目标网络
             self.update_target_model()
-        torch.save(self.model, './models/model_complete_1.pth')
+        torch.save(self.model, './models/model_alternative_1.pth')
 
     def test(self):
         state = self.env.reset()

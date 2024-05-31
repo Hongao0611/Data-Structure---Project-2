@@ -209,7 +209,6 @@ class Package:
         self.path = []  # List of nodes on the expected path
         self.delay = float('inf')  # Remaining delay before processing
         self.done = False
-        self.reward = 0.0  # Current Reward/cost for this package
     def __str__(self):
         #return f"Package({self.id}, TimeCreated: {self.time_created}, Src: {self.src}, Dst: {self.dst}, Category: {self.category})"
         return f"Package({self.id}, Path: {self.path})"
@@ -871,7 +870,7 @@ class Agent:
             
             # 更新目标网络
             self.update_target_model()
-        torch.save(self.model, './models/model_complete.pth')
+        #torch.save(self.model, './models/model_complete.pth')
 
     def test(self):
         state = self.env.reset()

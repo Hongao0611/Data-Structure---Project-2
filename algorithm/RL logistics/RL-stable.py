@@ -29,7 +29,6 @@ class Package:
         self.path = []  # List of nodes on the expected path
         self.delay = float('inf')  # Remaining delay before processing
         self.done = False
-        self.reward = 0.0  # Current Reward/cost for this package
     def __str__(self):
         #return f"Package({self.id}, TimeCreated: {self.time_created}, Src: {self.src}, Dst: {self.dst}, Category: {self.category})"
         return f"Package({self.id}, Path: {self.path})"
@@ -592,7 +591,7 @@ class Agent:
         )
         # 定义损失函数和优化器
         self.criterion = nn.MSELoss()
-        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-4)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-2)
         self.gamma = 0.99
         self.batch_size = 64
         self.epsilon = 0.9
@@ -690,7 +689,7 @@ class Agent:
             
             # 更新目标网络
             self.update_target_model()
-        torch.save(self.model, './models/model_complete.pth')
+        torch.save(self.model, './models/model_alternative.pth')
 
     def test(self):
         state = self.env.reset()
@@ -747,7 +746,7 @@ def test_classic():
 def test_RL():
     env = LogisticsEnv()
     agent = Agent(env)
-    agent.train(500)
+    agent.train(100)
     agent.test()
 
 # 运行测试
