@@ -1,3 +1,9 @@
+'''
+@author: 朱虹翱
+@description: 在classic.py的基础上，朱虹翱改进了环境的定义，将任务包装为强化学习的环境，创建了Agent类来选择动作并且实施。
+该程序调用DQN算法来实现全局优化，详情请见README。
+'''
+
 import random
 import numpy as np
 import matplotlib.pyplot as plt

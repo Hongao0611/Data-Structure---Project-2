@@ -1,20 +1,208 @@
-import pickle
-import uuid
-import numpy as np
-with open('./data/data.pkl', 'rb') as file:
-    data = pickle.load(file)
-import heapq
+'''
+@author: 孙石，朱虹翱
+@description: 孙石在data_gen.py的基础上实现了经典的Bellmanfold算法，并且加以改进，对基础包裹和特殊包裹分开计算路径。
+朱虹翱实现了包裹、节点、路由、环境的定义，将该算法作为环境自动更新的策略。
+'''
 
+import random
+import numpy as np
+import matplotlib.pyplot as plt
+import uuid
+from sklearn.cluster import KMeans
+parameters = {
+    "station_num": 25,
+    "center_num": 5,
+    "packet_num": 10,
+}
+def data_gen():
+    # Generate Stations
+    station_pos = []
+    # properties are defined here: throughput/tick, time_delay, money_cost
+    station_prop_candidates = [
+        (10, 2, 0.5), (15, 2, 0.6), (20, 1, 0.8), (25, 1, 0.9)]
+    station_prop = []
+    for i in range(parameters["station_num"]):
+        # Map size is defined here, which is 100*100
+        station_pos.append((random.randint(0, 100), random.randint(0, 100)))
+        station_prop.append(
+            station_prop_candidates[random.randint(0, len(station_prop_candidates)-1)])
+    # Output Stations
+    print("Stations:")
+    for i in range(len(station_pos)):
+        print(f"s{i}", station_pos[i], station_prop[i])
+
+    # Generate Centers by clustering
+    kmeans = KMeans(n_clusters=parameters["center_num"])
+    kmeans.fit(station_pos)
+    station_labels = kmeans.predict(station_pos)
+    center_pos = [(int(x[0]), int(x[1])) for x in kmeans.cluster_centers_]
+    for i in range(len(center_pos)):
+        while center_pos[i] in station_pos:
+            # move slightly if center is overlapped with station
+            # you can also use other methods to avoid this situation
+            print("Warning: Center moved")
+            center_pos[i] = center_pos[i][0] + 1, center_pos[i][1] + 1
+    # properties are defined here: throughput/tick, time_delay, money_cost
+    center_prop_candidates = [
+        (100, 2, 0.5), (150, 2, 0.5), (125, 1, 0.5), (175, 1, 0.5)]
+    center_prop = []
+    for i in range(parameters["center_num"]):
+        center_prop.append(
+            center_prop_candidates[random.randint(0, len(center_prop_candidates)-1)])
+    # Output Centers
+    print("Centers:")
+    for i in range(parameters["center_num"]):
+        print(f"c{i}", center_pos[i], center_prop[i])
+
+    # Draw Stations and Centers
+#    plt.scatter([x[0] for x in station_pos], [x[1]
+#                for x in station_pos], c=station_labels, s=50, cmap='viridis')
+#    plt.scatter([x[0] for x in center_pos], [x[1]
+#                for x in center_pos], c='black', s=200, alpha=0.5)
+
+    # Generate Edges
+    edges = []
+    print("Edges (center to center):")      # Airlines
+    for i in range(parameters["center_num"]):
+        for j in range(parameters["center_num"]):
+            if j > i:
+                dist = np.linalg.norm(
+                    np.array(center_pos[i]) - np.array(center_pos[j]))
+                # src, dst, time_cost, money_cost
+                # time_cost and money_cost are defined here
+                edges.append((f"c{i}", f"c{j}", 0.25 * dist, 0.2 * dist))
+                edges.append((f"c{j}", f"c{i}", 0.25 * dist, 0.2 * dist))
+#                plt.plot([center_pos[i][0], center_pos[j][0]], [
+#                         center_pos[i][1], center_pos[j][1]], 'r--')
+                print(edges[-2])
+                print(edges[-1])
+    print("Edges (center to station):")     # Highways
+    for i in range(parameters["center_num"]):
+        for j in range(parameters["station_num"]):
+            if station_labels[j] == i:
+                dist = np.linalg.norm(
+                    np.array(center_pos[i]) - np.array(station_pos[j]))
+                # time_cost and money_cost are defined here
+                edges.append((f"c{i}", f"s{j}", 0.6 * dist, 0.12 * dist))
+                edges.append((f"s{j}", f"c{i}", 0.6 * dist, 0.12 * dist))
+#                plt.plot([center_pos[i][0], station_pos[j][0]], [
+#                         center_pos[i][1], station_pos[j][1]], 'b--')
+                print(edges[-2])
+                print(edges[-1])
+    print("Edges (station to station):")    # Roads
+    for i in range(parameters["station_num"]):
+        for j in range(parameters["station_num"]):
+            if i > j and (np.linalg.norm(np.array(station_pos[i]) - np.array(station_pos[j])) < 30):
+                dist = np.linalg.norm(
+                    np.array(station_pos[i]) - np.array(station_pos[j]))
+                # time_cost and money_cost are defined here
+                edges.append((f"s{i}", f"s{j}", 0.8 * dist, 0.07*dist))
+                edges.append((f"s{j}", f"s{i}", 0.8 * dist, 0.07*dist))
+#                plt.plot([station_pos[i][0], station_pos[j][0]], [
+#                         station_pos[i][1], station_pos[j][1]], 'g--')
+                print(edges[-2])
+                print(edges[-1])
+    #plt.show()
+
+    # Generate Packets
+    packets = []
+    src_prob = np.random.random(parameters["station_num"])
+    src_prob = src_prob / np.sum(src_prob)
+    dst_prob = np.random.random(parameters["station_num"])
+    dst_prob = dst_prob / np.sum(dst_prob)
+    # Package categories are defined here: 0 for Regular, 1 for Express
+    speed_prob = [0.7, 0.3]
+    print("Packets:")
+    for i in range(parameters["packet_num"]):      # Number of packets
+        src = np.random.choice(parameters["station_num"], p=src_prob)
+        dst = np.random.choice(parameters["station_num"], p=dst_prob)
+        while dst == src:
+            dst = np.random.choice(parameters["station_num"], p=dst_prob)
+        category = np.random.choice(2, p=speed_prob)
+        # Create time of the package, during 12 time ticks(hours). Of course you can change it.
+        create_time = np.random.random() * 12
+        packets.append((create_time, f"s{src}", f"s{dst}", category))
+    # Sort packets by create time
+    packets.sort(key=lambda x: x[0])
+    # Output Packets
+    for packet in packets:
+        print(uuid.uuid4(), packet)
+
+    M=np.zeros((2*(parameters["center_num"]+parameters["station_num"]),2*(parameters["center_num"]+parameters["station_num"])))
+    for i in range(2*(parameters["center_num"]+parameters["station_num"])):
+        for j in range(2*(parameters["center_num"]+parameters["station_num"])):
+            M[i][j]=np.Infinity
+    for i in range(parameters["center_num"]+parameters["station_num"]):
+        M[2*i][2*i+1]=0.01
+    for i in range(parameters["center_num"]):               #要处理的还有M[2*i][2*i+1]
+        for j in range(parameters["center_num"]):
+            if j > i:
+                M[2*i+1][2*j] = 0.25*np.linalg.norm(
+                    np.array(center_pos[i]) - np.array(center_pos[j]))
+                M[2*j+1][2*i] = M[2*i+1][2*j]
+    for i in range(parameters["center_num"]):
+        for j in range(parameters["station_num"]):
+            if station_labels[j] == i:
+                M[2*i+1][2*j+2*parameters["center_num"]] = 0.6*np.linalg.norm(
+                    np.array(center_pos[i]) - np.array(station_pos[j]))
+                M[2*j+2*parameters["center_num"]+1][2*i] = M[2*i+1][2*j+2*parameters["center_num"]]
+    for i in range(parameters["station_num"]):
+        for j in range(parameters["station_num"]):
+            if i > j and (np.linalg.norm(np.array(station_pos[i]) - np.array(station_pos[j])) < 30):
+                M[2*i+2*parameters["center_num"]+1][2*j+2*parameters["center_num"]] = 0.8*np.linalg.norm(
+                    np.array(station_pos[i]) - np.array(station_pos[j]))
+                M[2*j+2*parameters["center_num"]+1][2*i+2*parameters["center_num"]]=M[2*i+2*parameters["center_num"]+1][2*j+2*parameters["center_num"]]
+    N=np.zeros((2*(parameters["center_num"]+parameters["station_num"]),2*(parameters["center_num"]+parameters["station_num"])))
+    for i in range(2*(parameters["center_num"]+parameters["station_num"])):
+        for j in range(2*(parameters["center_num"]+parameters["station_num"])):
+            N[i][j]=np.Infinity
+    for i in range(parameters["center_num"]):               #要处理的还有M[2*i][2*i+1]
+        for j in range(parameters["center_num"]):
+            if j > i:
+                N[2*i+1][2*j] = 0.2*np.linalg.norm(
+                    np.array(center_pos[i]) - np.array(center_pos[j]))
+                N[2*j+1][2*i] = N[2*i+1][2*j]
+    for i in range(parameters["center_num"]):
+        for j in range(parameters["station_num"]):
+            if station_labels[j] == i:
+                N[2*i+1][2*j+2*parameters["center_num"]] = 0.12*np.linalg.norm(
+                    np.array(center_pos[i]) - np.array(station_pos[j]))
+                N[2*j+2*parameters["center_num"]+1][2*i] = N[2*i+1][2*j+2*parameters["center_num"]]
+    for i in range(parameters["station_num"]):
+        for j in range(parameters["station_num"]):
+            if i > j and (np.linalg.norm(np.array(station_pos[i]) - np.array(station_pos[j])) < 30):
+                N[2*i+2*parameters["center_num"]+1][2*j+2*parameters["center_num"]] = 0.07*np.linalg.norm(
+                    np.array(station_pos[i]) - np.array(station_pos[j]))
+                N[2*j+2*parameters["center_num"]+1][2*i+2*parameters["center_num"]]=N[2*i+2*parameters["center_num"]+1][2*j+2*parameters["center_num"]]
+    for i in range(parameters["center_num"]):
+        N[2*i][2*i+1]=center_prop[i][2]
+    for i in range(parameters["station_num"]):
+        N[2*i+2*parameters["center_num"]][2*i+2*parameters["center_num"]+1]=station_prop[i][2]
+
+    return {
+        "station_pos": station_pos,
+        "station_prop": station_prop,
+        "center_pos": center_pos,
+        "center_prop": center_prop,
+        "edges": edges,
+        "packets": packets,
+        "money cost":M,
+        "time cost":N,
+    }
+
+import heapq
 #generate stations, centers, packages.
+data = data_gen()
 station_pos = data['station_pos']
 station_prop = data['station_prop']
 center_pos = data['center_pos']
 center_prop = data['center_prop']
 edges = data['edges']
 packets = data['packets']
+moneycost_initial = data["money cost"]
+timecost_initial = data["time cost"]
 moneycost = data["money cost"]
 timecost = data["time cost"]
-parameters = data["parameters"]
 time_global = 0.0
 
 class Package:
@@ -29,6 +217,7 @@ class Package:
         self.path = []  # List of nodes on the expected path
         self.delay = float('inf')  # Remaining delay before processing
         self.done = False
+        self.reward = 0.0  # Current Reward/cost for this package
     def __str__(self):
         #return f"Package({self.id}, TimeCreated: {self.time_created}, Src: {self.src}, Dst: {self.dst}, Category: {self.category})"
         return f"Package({self.id}, Path: {self.path})"
@@ -72,18 +261,18 @@ class Node:
             if not self.buffer:
                 heapq.heappush(self.buffer, (self.package_order ,package))
                 package.delay = float('inf')  # Update package delay
-                #print(f"Pack added to Node: {self.id};")
+                print(f"Pack added to Node: {self.id};")
                 self.process_packages()
             else: # 如果buffer有包裹，获取堆顶的包裹
                 index, top_package = self.buffer[0]
                 if top_package.category or package.category == 0: #如果堆顶是express包裹，不做特殊处理；如果堆顶是standard,插入也是standard,不做特殊处理
                     heapq.heappush(self.buffer, (self.package_order ,package))
                     package.delay = float('inf')  # Update package delay
-                    #print(f"Pack added to Node: {self.id};")
+                    print(f"Pack added to Node: {self.id};")
                 else: #如果堆顶是standard包裹,插入是express
                     heapq.heappush(self.buffer, (index-1 ,package))
                     package.delay = float('inf')  # Update package delay
-                    #print(f"Pack added to Node: {self.id};")
+                    print(f"Pack added to Node: {self.id};")
 
                 self.process_packages()
     
@@ -100,7 +289,7 @@ class Node:
     def remove_package(self):
         if self.packages and self.packages[0][1].delay <= 0:
             _, package = heapq.heappop(self.packages)  # Remove the package with the least priority (oldest)
-            #print(f"package: {package.id} removed from Node: {self.id}.")
+            print(f"package: {package.id} removed from Node: {self.id}.")
             self.process_packages()
             return package
         elif self.packages[0][1].delay > 0:
@@ -130,12 +319,12 @@ class Route:
         # Packages are added to the route.packages in the order they arrive
         heapq.heappush(self.packages, (self.package_order ,package))
         package.delay = self.time  # Update package delay
-        #print(f"Pack added to Route: {self.src}->{self.dst};")
+        print(f"Pack added to Route: {self.src}->{self.dst};")
 
     def remove_package(self):
         if self.packages and self.packages[0][1].delay <= 0:
             _, package = heapq.heappop(self.packages)  # Remove the package with the least priority (oldest)            
-            #print(f"package: {package.id} removed from Route: {self.id}.")
+            print(f"package: {package.id} removed from Route: {self.id}.")
             return package
         elif self.packages[0][1].delay > 0:
             print(f"Error! Removing Package: {package.id} not done from Route: {self.id}!")
@@ -163,12 +352,8 @@ def get_next_node(package_path_list, curr_node):
         print("Error! curr_node not found in path!")
         return None
 
-def get_pack_num(route):
-    return len(route.packages)
-# TODO
-def update_distance():
-    return 0
-# TODO
+
+
 
 class LogisticsEnv:
     def __init__(self):
@@ -194,7 +379,7 @@ class LogisticsEnv:
         # Add packets as packages
         for packet in packets:
             p = self.add_package(uuid.uuid4(), *packet)
-            #print(f"Package {p.id} added, delay={p.delay}, src={p.src}, dst={p.dst}, done={p.done}, path={p.path}")
+            print(f"Package {p.id} added, delay={p.delay}, src={p.src}, dst={p.dst}, done={p.done}, path={p.path}")
     def reset(self):
         print("Reseting......")
         for node, route in zip(self.nodes.values(),self.routes.values()):
@@ -208,7 +393,7 @@ class LogisticsEnv:
         # Add packets as packages
         for packet in packets:
             p = self.add_package(uuid.uuid4(), *packet)
-            #print(f"Package {p.id} added, delay={p.delay}, src={p.src}, dst={p.dst}, done={p.done}, path={p.path}")
+            print(f"Package {p.id} added, delay={p.delay}, src={p.src}, dst={p.dst}, done={p.done}, path={p.path}")
 
         print(f"Env reset. TimeTick={self.TimeTick}")
         return self.get_load()
@@ -281,6 +466,28 @@ class LogisticsEnv:
         self.packages[id] = package
         self.nodes[src].add_package(package)  # 添加到优先队列中
         return package
+    def update_distance(self):
+        for i in self.routes.values():
+        
+            if i.src[0]=='s':
+                a=int(i.src[1:])*2+2*parameters["center_num"]
+            if i.src[0]=='c':
+                a=int(i.src[1:])*2
+            if i.dst[0]=='s':
+                b=int(i.dst[1:])*2+2*parameters["center_num"]
+            if i.dst[0]=='c':
+                b=int(i.dst[1:])*2
+            if len(i.packages)>30:
+                self.moneycost[a+1][b]=2*self.moneycost[a+1][b]
+                self.moneycost[b+1][a]=2*self.moneycost[b+1][a]
+                self.timecost[a+1][b]=2*self.moneycost[a+1][b]
+                self.timecost[b+1][a]=2*self.moneycost[b+1][a]   ####极端负载下时间成本和金钱成本都大幅提高
+            else:
+                self.moneycost[a+1][b]=self.moneycost_initial[a+1][b]
+                self.moneycost[b+1][a]=self.moneycost_initial[b+1][a]
+                self.timecost[a+1][b]=self.moneycost_initial[a+1][b]
+                self.timecost[b+1][a]=self.moneycost_initial[b+1][a]
+        return 0
    
     def find_shortest_time_path(self, src, dst):
         if src[0]=='s':
@@ -476,7 +683,7 @@ class LogisticsEnv:
             new_path = [path[0]] + self.find_shortest_time_path(path[1],path[-1])
             return path #TODO new_path
 
-    def change_route(self, route):
+    def change_route(self, route):#TODO 检查是否正确更改路径
         src_node = self.nodes[route.src]
         # 检查堆是否为空
         if src_node.packages:
@@ -484,8 +691,8 @@ class LogisticsEnv:
             for _, package in src_node.packages:
                 next_node_id = get_next_node(package.path,src_node.id)
                 if package.delay<=0.1 and next_node_id == route.dst and next_node_id != package.dst:
-                    #print(f"有符合条件的包裹！{package}")
-                    #print(type(next_node_id),next_node_id)
+                    print(f"有符合条件的包裹！{package}")
+                    print(type(next_node_id),next_node_id)
                     if package.category:
                         # For Express packages, find the shortest total time path
                         new_path=self.find_alternative_time_path(src_node.id, package.dst, next_node_id)
@@ -493,10 +700,9 @@ class LogisticsEnv:
                         # For Standard packages, find the lowest total cost path
                         new_path=self.find_alternative_cost_path(src_node.id, package.dst, next_node_id)
                     if new_path == []: #如果有新路线，采用；如果没有，不变
-                        #print(f"Alternative Route unavailable!")
-                        continue
+                        print(f"Alternative Route unavailable!")
                     else:
-                        #print(f"Route for Pack: {package.id} changed from {package.path} to {new_path}!")
+                        print(f"Route for Pack: {package.id} changed from {package.path} to {new_path}!")
                         package.path = new_path
                         
     def step(self, actions=None): 
@@ -544,7 +750,7 @@ class LogisticsEnv:
                 # 获取下一个包裹
                 top_package = get_top_package(node)
         
-        _ = update_distance() #TODO 更新函数
+        _ = self.update_distance() #TODO 更新函数
         return self.get_load(), self.get_reward()
     
 def print_state(state):
@@ -572,27 +778,24 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.distributions as td
 from collections import deque
-import matplotlib.pyplot as plt
 class Agent: 
-    def __init__(self, env, buffer_size=100000):
+    def __init__(self, env, buffer_size=10000):
         self.env = env
         self.action_n = len(env.routes.keys())  # 0 for unchanged route, 1 for changed route
         self.state_n = 2*len(env.nodes.keys()) + len(env.routes.keys())
-        #print(f"Action_N: {self.action_n}, State_N: {self.state_n}")
+        print(f"Action_N: {self.action_n}, State_N: {self.state_n}")
         # 初始化神经网络
         self.model = nn.Sequential(
-            nn.Linear(self.state_n, 256),
+            nn.Linear(self.state_n, 128),
             nn.ReLU(),
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, 128),
+            nn.Linear(128, 128),
             nn.ReLU(),
             nn.Linear(128, self.action_n)
         )
         # 定义损失函数和优化器
         self.criterion = nn.MSELoss()
-        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-2)
-        self.gamma = 0.99
+        self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
+        self.gamma = 0.999999
         self.batch_size = 64
         self.epsilon = 0.9
         # 经验回放缓冲区
@@ -619,7 +822,9 @@ class Agent:
             state = torch.FloatTensor(state)
             q_values = self.model(state)
             actions = [1 if i >0 else 0 for i in q_values.tolist()]
-        #print(f"Action:{actions}")
+        #dist = td.Categorical(logits=q_values)
+        #actions = [dist.sample().item() for _ in self.env.routes.keys()]
+        print(f"Action:{actions}")
         return actions
 
     def store_transition(self, state, action, reward, next_state):
@@ -632,7 +837,6 @@ class Agent:
 
     def train(self, n_episodes):
         rewards = []
-        time = []
         for episode in range(n_episodes):
             total_reward = 0
             state = self.env.reset()
@@ -643,18 +847,14 @@ class Agent:
                 state = next_state
                 #print(f"Reward: {type(reward)}; {reward}")
                 total_reward += reward
-            rewards.append(total_reward)
-            time.append(self.env.TimeTick)
-            print(f"Episode {episode+1}/{n_episodes}, Total Reward: {total_reward}, Time: {self.env.TimeTick}")
-            self.epsilon *=0.99 #epsilon-decay policy
-        plt.plot(rewards,label='Reward')
-        plt.plot(time, label='Time')
+                rewards.append(total_reward)
+            print(f"Episode {episode+1}/{n_episodes}, Total Reward: {total_reward}")
+            self.epsilon *=0.9 #epsilon-decay policy
+        plt.plot(rewards)
         plt.xlabel('Episode')
-        plt.ylabel('Total Reward and Time')
-        plt.title('Total Reward and Time vs Episode')
-        plt.legend()
+        plt.ylabel('Total Reward')
+        plt.title('Total Reward vs Episode')
         plt.show()
-        plt.savefig('./pics/RL_training.png')
         for _ in range(n_episodes):
             batch = random.sample(self.memory, self.batch_size)  # 随机采样batch_size条经验
             states, actions, rewards, next_states = zip(*batch)
@@ -689,7 +889,6 @@ class Agent:
             
             # 更新目标网络
             self.update_target_model()
-        torch.save(self.model, './models/model_alternative.pth')
 
     def test(self):
         state = self.env.reset()
@@ -700,27 +899,13 @@ class Agent:
             self.store_transition(state, action, reward, next_state)
             state = next_state
             total_reward += reward
-        # 打印包裹记录
-        for pack in self.env.packages.values():
-            print(f"包裹ID: {pack.id}")
-            for entry in pack.history:
-                time, location, event = entry
-                print(f"时间: {time}, 地点: {location}, 事件: {event}")
-            print("-" * 40)  # 输出分隔线
-        # 打印节点和路由记录
-        for node in self.env.nodes.values():
-                for entry in node.history:
-                    print(f"Node: {node.id}, History: {node.history}")
-        for route in self.env.routes.values():
-                for entry in route.history:
-                    print(f"Route: {route.id}, History: {route.history}")
-        print(f"Total Time: {self.env.TimeTick}, Total Cost: {total_reward}")
+        print(f"Total Reward: {total_reward}")
 
 def test_classic():
     # 初始化环境, 打印初始状态
     env = LogisticsEnv()
-    print("Initial State:")
-    print_state(env.get_state())
+    #print("Initial State:")
+    #print_state(env.get_state())
     # 模拟
     total_reward = 0
     while env.done == False:
@@ -746,8 +931,8 @@ def test_classic():
 def test_RL():
     env = LogisticsEnv()
     agent = Agent(env)
-    agent.train(100)
+    agent.train(200)
     agent.test()
 
 # 运行测试
-test_RL()
+test_classic()
