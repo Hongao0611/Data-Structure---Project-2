@@ -53,10 +53,10 @@
     - get_state(): 获取当前物流环境的state，用于打印状态。
     - get_load(): 获取当前物流环境各个节点和路由的负荷，用于评估状态。
     - get_reward(): 获取当前步的总奖励，用于激励学习。
-    - find_shortest_time_path(): express包裹采用的Djsktra默认策略
-    - find_lowest_cost_path(): standard包裹采用的Djsktra默认策略
-    - find_alternative_time_path(): express包裹采用的，绕过了下一个节点的Djsktra策略
-    - find_alternative_cost_path(): standard包裹采用的，绕过了下一个节点的Djsktra策略
+    - find_shortest_time_path(): express包裹采用的Bellman Ford默认策略
+    - find_lowest_cost_path(): standard包裹采用的Bellman Ford默认策略
+    - find_alternative_time_path(): express包裹采用的，绕过了下一个节点的Bellman Ford策略
+    - find_alternative_cost_path(): standard包裹采用的，绕过了下一个节点的Bellman Ford策略
     - change_route(route): 对于即将发送到某条路由上的包裹，改变它们的未来路径，绕过该路径
     - 
 ### Agent类：
